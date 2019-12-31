@@ -8,7 +8,7 @@ final String[] symbols = {"","X","O","\u25b2", "\u25C6"};
 final color[] colors = {color(255),color(231, 76, 60), color(52, 152, 219), color(46, 204, 113), color(247, 220, 111)};
 final String[] colorNames = {"", "Red", "Blue", "Green", "Yellow"};
 
-int gridSize = 32, offset = 20, cellSize;
+int gridSize = 32, offset = 40, cellSize;
 int target = 4;
 int[][] grid;
 
@@ -34,6 +34,11 @@ void setup(){
     makeNameBox();
     makeChatBox();
     
+    selectedBox = nameBox;
+    nameBox.isSelected = true;
+    
+    lobbies = new ArrayList<GameLobby>();
+    
     //Connect To Server
     //lobbyClient = connectMain();
     //if(lobbyClient == null){
@@ -50,6 +55,12 @@ void draw(){
     background(255);
     if(!inLobby){
         drawNameBox();
+    }
+    else if(!inGameLobby){
+        for(int i = 0; i < lobbies.size(); i++){
+            GameLobby gl = lobbies.get(i);
+            gl.displayInfo(i);
+        }
     }
 }
 
@@ -97,7 +108,7 @@ void keyPressed(){
                     inLobby = true;
                     lobbyName = nameBox.text;
                     nameBox.active = false;
-                    println(lobbyName);
+                    refreshLobbies();
                 }
             }
             break;

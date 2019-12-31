@@ -1,6 +1,8 @@
 TextBox nameBox = null;
 String serverError = "";
 
+int pixelsUp = 0;
+
 void drawNameBox(){
     textSize(16);
     textAlign(CENTER);

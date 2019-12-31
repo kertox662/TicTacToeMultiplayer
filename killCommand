@@ -1,1 +1,1 @@
-kill $(pidof calcBin)
+kill $(pidof tictactoeBin)

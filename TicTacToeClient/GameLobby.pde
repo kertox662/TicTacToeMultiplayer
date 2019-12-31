@@ -1,5 +1,33 @@
+final int LOBBY_HEIGHT = 30;
+
 boolean inGameLobby = false;
 TextBox chatBox = null;
+
+ArrayList<GameLobby> lobbies;
+
+void refreshLobbies(){
+    lobbies.clear();
+    lobbyClient.write("r\n");
+    int numEnd = 0;
+    char nextChar;
+    String current = "";
+    while(numEnd != 2){
+        if(lobbyClient.available() == 0) continue;
+        nextChar = lobbyClient.readChar();
+        if(nextChar == '\n'){
+            if(!current.equals("")){
+                lobbies.add(new GameLobby(current.split(",")));
+                current = "";
+            }
+            numEnd++;
+        }
+        else{
+            numEnd = 0;
+            current+=nextChar;
+        }
+    }
+    println("Done Refreshing");
+}
 
 private class GameLobby{
     String name;
@@ -17,7 +45,28 @@ private class GameLobby{
         this.gridSize = gridSize;
     }
     
-    void display(){
+    GameLobby(String[] info){
+        this(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),Integer.parseInt(info[3]),Integer.parseInt(info[4]));
+    }
+    
+    void displayInfo(int index){
+        stroke(0);
+        noFill();
+        rectMode(CORNER);
+        rect(offset/2, index * LOBBY_HEIGHT - pixelsUp, gridSpace - offset, LOBBY_HEIGHT);
+        
+        fill(0);
+        textAlign(LEFT, CENTER);
+        textSize(16);
+        text(this.name, offset/2 + 10, index*LOBBY_HEIGHT + LOBBY_HEIGHT/2 - pixelsUp);
+        String info = "";
+        info += this.curPlayers + "/" + this.maxPlayers + "      " + gridSize + "x" + gridSize + " " + mode;
+        textAlign(RIGHT, CENTER);
+        text(info, gridSpace - offset/2 - 10, index*LOBBY_HEIGHT + LOBBY_HEIGHT/2 - pixelsUp);
+        
+    }
+    
+    void displayGrid(){
         fill(0);
         background(255);
         //Format Setup
