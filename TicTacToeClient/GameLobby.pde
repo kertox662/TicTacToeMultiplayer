@@ -4,6 +4,7 @@ boolean inGameLobby = false;
 TextBox chatBox = null;
 
 ArrayList<GameLobby> lobbies;
+GameLobby selectedLobby = null;
 
 void refreshLobbies(){
     lobbies.clear();
@@ -26,7 +27,6 @@ void refreshLobbies(){
             current+=nextChar;
         }
     }
-    println("Done Refreshing");
 }
 
 private class GameLobby{
@@ -36,6 +36,7 @@ private class GameLobby{
     int gridSize;
     int[][] grid;
     String[] players;
+    boolean selected;
     
     GameLobby(String name, int curP, int maxP, int mode, int gridSize){
         this.name = name;
@@ -43,6 +44,7 @@ private class GameLobby{
         this.maxPlayers = maxP;
         this.mode = mode;
         this.gridSize = gridSize;
+        this.selected = false;
     }
     
     GameLobby(String[] info){
@@ -50,8 +52,11 @@ private class GameLobby{
     }
     
     void displayInfo(int index){
+        //if((index+1)*LOBBY_HEIGHT - pixelsUp > gridSpace-offset/2) return;
         stroke(0);
         noFill();
+        if(selected)
+            fill(39, 174, 96);
         rectMode(CORNER);
         rect(offset/2, index * LOBBY_HEIGHT - pixelsUp, gridSpace - offset, LOBBY_HEIGHT);
         

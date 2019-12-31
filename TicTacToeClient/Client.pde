@@ -20,12 +20,12 @@ Client connectMain(String name){
         client.stop();
         return null;
     }
-    if(acceptance == "1"){
+    if(acceptance.equals("1")){
         serverError = "Could not connect to server: Username Taken.";
         client.stop();
         return null;
     }
-    else if(acceptance == "2"){
+    else if(acceptance.equals("2")){
         serverError = "Could not connect to server: Server Full.";
         client.stop();
         return null;

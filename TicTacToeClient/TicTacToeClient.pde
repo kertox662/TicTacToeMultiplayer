@@ -33,6 +33,7 @@ void setup(){
     
     makeNameBox();
     makeChatBox();
+    makeHostBoxes();
     
     selectedBox = nameBox;
     nameBox.isSelected = true;
@@ -61,26 +62,26 @@ void draw(){
             GameLobby gl = lobbies.get(i);
             gl.displayInfo(i);
         }
+        outLineGrid();
+        drawHostBoxes();
     }
 }
 
+void outLineGrid(){
+    stroke(0);
+    fill(255);
+    beginShape();
+    vertex(0,gridSpace);
+    vertex(gridSpace,gridSpace);
+    vertex(gridSpace,0);
+    vertex(width, 0);
+    vertex(width, height);
+    vertex(0,height);
+    endShape(CLOSE);
+    
+}
+
 void mouseClicked(){
-    //if(winner != 0) return;
-    //if(winner == 0) return;
-    //if(mouseX >= offset/2 && mouseX <= gridSpace-offset/2 && mouseY >= offset/2 && mouseY <= gridSpace-offset/2){
-    //    int x = (mouseX - offset/2)/cellSize, y = (mouseY - offset/2)/cellSize;
-    //    if(grid[y][x] != 0) 
-    //        return;
-    //    grid[y][x] = playerTurn;
-    //    if(checkWinner(y,x)){
-    //        winner = playerTurn;
-    //        if(mode == 1)
-    //            println("Player",winner,"playing", symbols[winner] ,"Wins!");
-    //        else 
-    //            println("Player",winner,"playing", colorNames[winner] ,"Wins!");
-    //    };
-    //    playerTurn = playerTurn%numPlayers + 1;
-    //}
     if(selectedBox != null)
         selectedBox.isSelected = false;
     selectedBox = null;
@@ -88,6 +89,21 @@ void mouseClicked(){
         if(boxes[i].isClicked(mouseX,mouseY)){
             selectedBox = boxes[i];
             selectedBox.isSelected = true;
+        }
+    }
+    
+    if(inLobby){
+        if(mouseX >= offset/2 && mouseX <= gridSpace - offset/2 && mouseY >= 0 && mouseY <= gridSpace){
+            int trueY = mouseY + pixelsUp;
+            int ind = trueY / LOBBY_HEIGHT;
+            if(ind < lobbies.size()){
+                if(selectedLobby != null){
+                    selectedLobby.selected = false;
+                }
+                selectedLobby = lobbies.get(ind);
+                selectedLobby.selected = true;
+            }
+            println(ind);
         }
     }
 }
@@ -106,8 +122,12 @@ void keyPressed(){
                 lobbyClient = connectMain(nameBox.text);
                 if(lobbyClient != null){
                     inLobby = true;
+                    pixelsUp = 0;
                     lobbyName = nameBox.text;
                     nameBox.active = false;
+                    for(int i = 2; i < 6; i++){
+                        boxes[i].active = true;
+                    }
                     refreshLobbies();
                 }
             }
@@ -140,6 +160,13 @@ void keyPressed(){
     }
 }
 
+void mouseWheel(MouseEvent e){
+    if(mouseX >= 0 && mouseX <= gridSpace && mouseY >= 0 && mouseY <= gridSpace && inLobby){
+        pixelsUp += e.getCount();
+        pixelsUp = max(min(pixelsUp, lobbies.size()*LOBBY_HEIGHT - gridSpace),0);
+    }
+}
+
 boolean checkWinner(int i, int j){
     int val = grid[i][j];
     int[][] dist = new int[3][3];
@@ -168,3 +195,21 @@ boolean checkWinner(int i, int j){
     return false;
     
 }
+
+//Click Checker, add back in later
+    //if(winner != 0) return;
+    //if(winner == 0) return;
+    //if(mouseX >= offset/2 && mouseX <= gridSpace-offset/2 && mouseY >= offset/2 && mouseY <= gridSpace-offset/2){
+    //    int x = (mouseX - offset/2)/cellSize, y = (mouseY - offset/2)/cellSize;
+    //    if(grid[y][x] != 0) 
+    //        return;
+    //    grid[y][x] = playerTurn;
+    //    if(checkWinner(y,x)){
+    //        winner = playerTurn;
+    //        if(mode == 1)
+    //            println("Player",winner,"playing", symbols[winner] ,"Wins!");
+    //        else 
+    //            println("Player",winner,"playing", colorNames[winner] ,"Wins!");
+    //    };
+    //    playerTurn = playerTurn%numPlayers + 1;
+    //}

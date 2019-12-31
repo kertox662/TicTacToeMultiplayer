@@ -1,7 +1,7 @@
 final int cursorBlinkSpeed = 45;
 TextBox selectedBox = null;
 
-TextBox[] boxes = {null,null};
+TextBox[] boxes = {null,null,null,null,null,null};
 
 void makeNameBox(){
     int boxW = 150, boxH = 15;
@@ -14,6 +14,15 @@ void makeChatBox(){
     int boxW = 150, boxH = 12;
     chatBox = new TextBox(width - boxW - 5, height - boxH - 5, boxW, boxH);
     boxes[1] = chatBox;
+}
+
+
+void makeHostBoxes(){
+    int boxW = 150, boxH = 15;
+    int middle = gridSpace + (width-gridSpace)/2 - boxW/2;
+    for(int i = 0; i < 4; i++){
+        boxes[i+2] = new TextBox(middle, (i+2) * 45, boxW, boxH);
+    }
 }
 
 private class TextBox{
