@@ -62,7 +62,8 @@ void draw(){
     if(!inLobby){
         drawNameBox();
     }
-    else if(!inGameLobby){
+    //else if(!inGameLobby){
+    else if(inLobby || inGameLobby){
         for(int i = 0; i < lobbies.size(); i++){
             GameLobby gl = lobbies.get(i);
             gl.displayInfo(i);
@@ -112,7 +113,6 @@ void mouseClicked(){
                 selectedLobby = lobbies.get(ind);
                 selectedLobby.selected = true;
             }
-            println(ind);
         }
         refresh.handleClick();
         if(refresh.framesClicked > 0 && !refresh.actionTaken){

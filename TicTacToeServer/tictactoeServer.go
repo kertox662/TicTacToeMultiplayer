@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"./game"
 	"./lobby"
 	"./logging"
 	"./naming"
@@ -37,6 +38,8 @@ func main() {
 		lobby.LobbyChannel <- lobbyChan
 		lobbyChan <- "n" + gl.EncodeMin()
 		s := <-lobbyChan
+		gl2 := <-lobby.GameChan
+		go game.HandleGame(gl2)
 		s += "3"
 	}
 

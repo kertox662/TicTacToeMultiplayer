@@ -9,9 +9,13 @@ GameLobby selectedLobby = null;
 int[] limits = {};
 
 void refreshLobbies(){
+    lobbyClient.write("r\n");
+    receiveLobbies();
+}
+
+void receiveLobbies(){
     selectedLobby = null;
     lobbies.clear();
-    lobbyClient.write("r\n");
     int numEnd = 0;
     char nextChar;
     String current = "";
@@ -102,15 +106,25 @@ void hostLobby(){
         hostError = "Lobby name matches existing lobby";
         return;
     }
+    
+    joinLobby(boxes[2].text);
     for(int i = 2; i < 7; i++){
         boxes[i].text = "";
     }
-    refreshLobbies();
-    joinLobby(boxes[2].text);
 }
 
 void joinLobby(String name){
-
+    lobbyClient.write("j"+name+'\n');
+    while(lobbyClient.available() == 0){
+    }
+    char c = lobbyClient.readChar();
+    if(c == '0'){
+        while(lobbyClient.available() == 0){
+        }
+        int index = Integer.parseInt(String.valueOf(lobbyClient.readChar()));
+        inGameLobby = true;
+        receiveLobbies();
+    }
 }
 
 private class GameLobby{
