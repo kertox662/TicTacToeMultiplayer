@@ -19,7 +19,7 @@ func main() {
 	lobby.LobbyChannel = make(chan chan string)
 	naming.NameChannel = make(chan chan string)
 
-	PORT := ":42069" //Default port
+	PORT := ":42069" //Default port, nice
 	arguments := os.Args
 	if len(arguments) > 1 {
 		PORT = ":" + arguments[1]
@@ -33,9 +33,11 @@ func main() {
 
 	lobbyChan := make(chan string)
 	for i := 1; i < 5; i++ {
-		gl := lobby.NewGameLobby("Lobby"+strconv.Itoa(i), i, i*i, i%2+1)
+		gl := lobby.NewGameLobby("Lobby"+strconv.Itoa(i), i, i*i, i%2+1, i)
 		lobby.LobbyChannel <- lobbyChan
-		lobbyChan <- "n" + gl.Encode()
+		lobbyChan <- "n" + gl.EncodeMin()
+		s := <-lobbyChan
+		s += "3"
 	}
 
 	// for i := 0; i < len(lobbies); i++ {

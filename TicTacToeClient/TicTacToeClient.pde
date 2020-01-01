@@ -16,6 +16,8 @@ int playerTurn = 1, numPlayers = 2;
 int mode = 1; //1 = Character, 2 = Color
 int winner = 0;
 
+String status = "unconnected";
+
 GameLobby curGame = null;
 
 void settings(){
@@ -34,6 +36,9 @@ void setup(){
     makeNameBox();
     makeChatBox();
     makeHostBoxes();
+    makeRefresh();
+    makeJoin();
+    makeHostButton();
     
     selectedBox = nameBox;
     nameBox.isSelected = true;
@@ -64,6 +69,10 @@ void draw(){
         }
         outLineGrid();
         drawHostBoxes();
+        drawHostError();
+        drawLobbyButtons();
+        drawUserName();
+        //println(hostButton.isHovered());
     }
 }
 
@@ -105,6 +114,23 @@ void mouseClicked(){
             }
             println(ind);
         }
+        refresh.handleClick();
+        if(refresh.framesClicked > 0 && !refresh.actionTaken){
+            refreshLobbies();
+            refresh.actionTaken = true;
+        }
+        joinLobby.handleClick();
+        if(joinLobby.framesClicked > 0 && !joinLobby.actionTaken){
+            if(selectedLobby != null){
+                joinLobby(selectedLobby.name);
+                joinLobby.actionTaken = true;
+            }
+        }
+        hostButton.handleClick();
+        if(hostButton.framesClicked > 0 && !hostButton.actionTaken){
+            hostLobby();
+            hostButton.actionTaken = true;
+        }
     }
 }
 
@@ -125,6 +151,9 @@ void keyPressed(){
                     pixelsUp = 0;
                     lobbyName = nameBox.text;
                     nameBox.active = false;
+                    refresh.active = true;
+                    joinLobby.active = true;
+                    hostButton.active = true;
                     for(int i = 2; i < 6; i++){
                         boxes[i].active = true;
                     }
@@ -146,14 +175,14 @@ void keyPressed(){
         case LEFT:
             if(selectedBox != null){
                 selectedBox.curIndex = max(0,selectedBox.curIndex-1);
-                println(selectedBox.curIndex);
+                //println(selectedBox.curIndex);
             }
             break;
         
         case RIGHT:
             if(selectedBox != null){
                 selectedBox.curIndex = min(selectedBox.text.length(),selectedBox.curIndex+1);
-                println(selectedBox.curIndex);
+                //println(selectedBox.curIndex);
             }
             break;
         }

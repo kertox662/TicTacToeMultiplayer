@@ -17,25 +17,35 @@ const maxLobbies = 500
 //LobbyChannel - The channel to communicate with to access lobby data
 var LobbyChannel chan chan string
 
+//GameChan - The channel to send valid games over
+var GameChan chan GameLobby
+
 //GameLobby - A Data object that holds the information for a game lobby
 type GameLobby struct {
 	Name                            string
 	NumPlayer, MaxPlayer, CurPlayer int
-	GridSize, Mode                  int
+	GridSize, Mode, Target          int
 	Grid                            [][]int
 	Started                         bool
 	PlayerNames                     []string
-	Connections                     []*net.Conn
+	Connections                     []net.Conn
+	CommChan                        chan chan string
 }
 
 //Encode - Turns the GameLobby data into a string
 func (gl *GameLobby) Encode() string {
-	data := []string{gl.Name, strconv.Itoa(gl.NumPlayer), strconv.Itoa(gl.MaxPlayer), strconv.Itoa(gl.Mode), strconv.Itoa(gl.GridSize)}
+	data := []string{gl.Name, strconv.Itoa(gl.NumPlayer), strconv.Itoa(gl.MaxPlayer), strconv.Itoa(gl.Mode), strconv.Itoa(gl.GridSize), strconv.Itoa(gl.Target)}
+	return strings.Join(data, ",")
+}
+
+//EncodeMin - Encodes the minimum data needed for a GameLobby
+func (gl *GameLobby) EncodeMin() string {
+	data := []string{gl.Name, strconv.Itoa(gl.MaxPlayer), strconv.Itoa(gl.Mode), strconv.Itoa(gl.GridSize), strconv.Itoa(gl.Target)}
 	return strings.Join(data, ",")
 }
 
 //AddPlayer - Adds a connection object and name to matching indices in the GameLobby object if they do not yet exist
-func (gl *GameLobby) AddPlayer(c *net.Conn, name string) {
+func (gl *GameLobby) AddPlayer(c net.Conn, name string) {
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == name {
 			return
@@ -51,9 +61,10 @@ func (gl *GameLobby) AddPlayer(c *net.Conn, name string) {
 	}
 }
 
-func (gl *GameLobby) removePlayer(c net.Conn, name string) {
-	for i := 0; i < len(gl.PlayerNames); i++ {
-		if gl.PlayerNames[i] == name {
+//RemovePlayer - Removes a connection object and name in the GameLobby object
+func (gl *GameLobby) RemovePlayer(c net.Conn, name string) {
+	for i := 0; i < len(gl.Connections); i++ {
+		if gl.Connections[i] == c {
 			gl.Connections[i] = nil
 			gl.PlayerNames[i] = ""
 			break
@@ -62,8 +73,8 @@ func (gl *GameLobby) removePlayer(c net.Conn, name string) {
 }
 
 //NewGameLobby - Minimum constructor for a GameLobby Object
-func NewGameLobby(name string, maxPlayer, gridSize, mode int) GameLobby {
-	newLobby := GameLobby{name, 0, maxPlayer, 0, gridSize, mode, nil, false, nil, nil}
+func NewGameLobby(name string, maxPlayer, gridSize, mode, target int) GameLobby {
+	newLobby := GameLobby{name, 0, maxPlayer, 0, gridSize, mode, target, nil, false, nil, nil}
 
 	emptyGrid := make([][]int, gridSize)
 	for i := 0; i < gridSize; i++ {
@@ -75,8 +86,10 @@ func NewGameLobby(name string, maxPlayer, gridSize, mode int) GameLobby {
 	players := make([]string, maxPlayer)
 	newLobby.PlayerNames = players
 
-	conns := make([]*net.Conn, maxPlayer)
+	conns := make([]net.Conn, maxPlayer)
 	newLobby.Connections = conns
+
+	newLobby.CommChan = make(chan chan string, 16)
 
 	return newLobby
 }
@@ -84,9 +97,10 @@ func NewGameLobby(name string, maxPlayer, gridSize, mode int) GameLobby {
 //NewGameLobbyFromString - Makes a new GameLobby object from an encoded string
 func NewGameLobbyFromString(data []string) GameLobby {
 	maxPlayer, _ := strconv.Atoi(data[1])
-	gridSize, _ := strconv.Atoi(data[2])
-	mode, _ := strconv.Atoi(data[3])
-	return NewGameLobby(data[0], maxPlayer, gridSize, mode)
+	mode, _ := strconv.Atoi(data[2])
+	gridSize, _ := strconv.Atoi(data[3])
+	target, _ := strconv.Atoi(data[4])
+	return NewGameLobby(data[0], maxPlayer, gridSize, mode, target)
 }
 
 func addNewLobby(gl *GameLobby) int {
@@ -111,12 +125,12 @@ func addNewLobby(gl *GameLobby) int {
 	return 0
 }
 
-func deleteLobby(gl *GameLobby) {
+func deleteLobby(lobbyName string) {
 	for i := 0; i < len(lobbies); i++ {
 		if lobbies[i] == nil {
 			break
 		}
-		if lobbies[i].Name == gl.Name {
+		if lobbies[i].Name == lobbyName {
 			lobbies = append(lobbies[:i], lobbies[i+1:]...)
 			break
 		}
@@ -138,6 +152,7 @@ func getLobbyList() string {
 
 //HandleLobbies - Handles access requests to lobby data
 func HandleLobbies() {
+	GameChan = make(chan GameLobby)
 	lobbies = make([]*GameLobby, 0, maxLobbies)
 	for {
 		comChan := <-LobbyChannel
@@ -150,8 +165,14 @@ func HandleLobbies() {
 			break
 		case 'n':
 			gl := NewGameLobbyFromString(strings.Split(request[1:], ","))
-			addNewLobby(&gl)
+			success := addNewLobby(&gl)
+			comChan <- strconv.Itoa(success)
+			if success == 0 {
+
+			}
 			break
+		case 'd':
+			deleteLobby(request[1:])
 		}
 	}
 }

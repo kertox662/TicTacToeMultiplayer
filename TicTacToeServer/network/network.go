@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 
+	"../game"
 	"../lobby"
 	"../logging"
 	"../naming"
@@ -82,20 +83,20 @@ func handleLobbyRequests(c net.Conn, command rune, message string) {
 		lobby.LobbyChannel <- lobbyChan
 		lobbyChan <- "r"
 		lobbyList := <-lobbyChan
-		fmt.Println(lobbyList)
+		// fmt.Println(lobbyList)
 		c.Write([]byte(lobbyList))
 
 	case 'j':
 		break
 	case 'n':
-		// data := strings.Split(message[1:], ",")
-		// gl := newGameLobbyFromString(data)
-		// success := addNewLobby(&gl)
-		// c.Write([]byte(strconv.Itoa(success)))
-		// if success == 0 {
-		// 	gl.addPlayer(&c, clientName)
-		// 	game.HandleGame(&gl)
-		// }
+		lobby.LobbyChannel <- lobbyChan
+		lobbyChan <- message
+		success := <-lobbyChan
+		c.Write([]byte(success))
+		if success == "0" {
+			gl := <-lobby.GameChan
+			game.HandleGame(&gl)
+		}
 		break
 	}
 }
