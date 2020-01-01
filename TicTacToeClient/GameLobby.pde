@@ -1,140 +1,26 @@
 final int LOBBY_HEIGHT = 30;
+final int MAX_CHAT_SIZE = 20;
 
 boolean inGameLobby = false;
 TextBox chatBox = null;
 
 ArrayList<GameLobby> lobbies;
-GameLobby selectedLobby = null;
+GameLobby selectedLobby = null, currentGame = null;
 
 int[] limits = {};
 
-void refreshLobbies(){
-    lobbyClient.write("r\n");
-    receiveLobbies();
-}
-
-void receiveLobbies(){
-    selectedLobby = null;
-    lobbies.clear();
-    int numEnd = 0;
-    char nextChar;
-    String current = "";
-    while(numEnd != 2){
-        if(lobbyClient.available() == 0) continue;
-        nextChar = lobbyClient.readChar();
-        if(nextChar == '\n'){
-            if(!current.equals("")){
-                lobbies.add(new GameLobby(current.split(",")));
-                current = "";
-            }
-            numEnd++;
-        }
-        else{
-            numEnd = 0;
-            current+=nextChar;
-        }
-    }
-}
-
-void hostLobby(){
-    hostError = "";
-    ArrayList<String> data = new ArrayList<String>();
-    for(int i = 2; i < 7; i++){
-        String dataPiece = boxes[i].text;
-        if(dataPiece.equals("")){
-            hostError = "Not all fields are filled in.\nPlease fill in all fields to host a game";
-            return;
-        }
-        if(i > 2){
-            try{
-                int d = Integer.parseInt(dataPiece);
-            }
-            catch(NumberFormatException e){
-                hostError = "Field that should have a number has text.";
-                return;
-            }
-        }
-        switch(i){
-            case 3:
-                int mPlayer = Integer.parseInt(dataPiece);
-                if(mPlayer < 2){
-                    hostError = "Too Little Players, have at least 2";
-                    return;
-                } else if(mPlayer > 4){
-                    hostError = "Too Many Players, have at most 4";
-                    return;
-                }
-                break;
-            case 4:
-                int mode = Integer.parseInt(dataPiece);
-                if(mode != 1 && mode != 2){
-                    hostError = "Invalid Mode, choose 1 or 2";
-                    return;
-                }
-                break;
-            case 5:
-                int gridSize = Integer.parseInt(dataPiece);
-                if(gridSize < 3){
-                    hostError = "Grid too small";
-                    return;
-                } else if(gridSize > 32){
-                    hostError = "Grid too big";
-                    return;
-                }
-                break;
-            case 6:
-                int target = Integer.parseInt(dataPiece);
-                gridSize = Integer.parseInt(data.get(data.size()-1));
-                if(target > gridSize){
-                    hostError = "Target too big, make it smaller";
-                    return;
-                }
-                break;
-        }
-        data.add(dataPiece);
-    }
-    String r = "";
-    for(int i = 0; i < data.size(); i++){
-        r += data.get(i);
-        if(i < data.size()-1) r += ',';
-    }
-    lobbyClient.write('n' + r + '\n');
-    while(lobbyClient.available() == 0){
-    }
-    String success = lobbyClient.readString();
-    if(success.equals("1")){
-        hostError = "Lobby name matches existing lobby";
-        return;
-    }
-    
-    joinLobby(boxes[2].text);
-    for(int i = 2; i < 7; i++){
-        boxes[i].text = "";
-    }
-}
-
-void joinLobby(String name){
-    lobbyClient.write("j"+name+'\n');
-    while(lobbyClient.available() == 0){
-    }
-    char c = lobbyClient.readChar();
-    if(c == '0'){
-        while(lobbyClient.available() == 0){
-        }
-        int index = Integer.parseInt(String.valueOf(lobbyClient.readChar()));
-        inGameLobby = true;
-        receiveLobbies();
-    }
-}
-
 private class GameLobby{
     String name;
-    int curPlayers, maxPlayers, playerTurn;
+    int curPlayers, maxPlayers, playerTurn, winner;
     int mode;
     int gridSize, target;
     int[][] grid;
     String[] players;
     boolean selected;
+    Button leaveButton;
+    int index;
+    String[] chat;
+    
     
     GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target){
         this.name = name;
@@ -142,8 +28,13 @@ private class GameLobby{
         this.maxPlayers = maxP;
         this.mode = mode;
         this.gridSize = gridSize;
+        this.grid = new int[gridSize][gridSize];
         this.selected = false;
         this.target = target;
+        this.leaveButton = makeLeave();
+        this.index = -1;
+        this.winner = -1;
+        chat = new String[MAX_CHAT_SIZE];
     }
     
     GameLobby(String[] info){
@@ -172,6 +63,12 @@ private class GameLobby{
         
     }
     
+    void display(){
+        displayGrid();
+        displayLeave();
+        displayChat();
+    }
+    
     void displayGrid(){
         fill(0);
         background(255);
@@ -198,5 +95,42 @@ private class GameLobby{
           line((gridSpace-offset) * i / gridSize + offset/2, offset/2, (gridSpace-offset) * i / gridSize + offset/2, gridSpace-offset/2);
           line(offset/2, (gridSpace-offset) * i / gridSize + offset/2, gridSpace-offset/2, (gridSpace-offset) * i / gridSize + offset/2);
         }
+    }
+    
+    void displayLeave(){
+        leaveButton.display();
+    }
+    
+    void displayChat(){
+    }
+    
+    void leaveLobby(){
+        if(currentGame != this) return;
+        lobbyClient.write("l" + lobbyName + '\n');
+        currentGame = null;
+        String myLeaveMessage = receive();
+        setLobbyStatus();
+    }
+    
+    void handleGridClick(){
+        if(winner != 0) return;
+        if(playerTurn != index) return;
+        if(mouseX >= offset/2 && mouseX <= gridSpace-offset/2 && mouseY >= offset/2 && mouseY <= gridSpace-offset/2){
+            int x = (mouseX - offset/2)/cellSize, y = (mouseY - offset/2)/cellSize;
+            if(grid[y][x] != 0) 
+                return;
+            grid[y][x] = index;
+            if(checkWinner(y,x)){
+                winner = index;
+                if(mode == 1)
+                    println("Player",winner,"playing", symbols[winner] ,"Wins!");
+                else 
+                    println("Player",winner,"playing", colorNames[winner] ,"Wins!");
+            };
+            playerTurn = 0;
+        }
+    }
+    
+    void handleServerMessage(String message){
     }
 }

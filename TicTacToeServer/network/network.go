@@ -27,6 +27,7 @@ func HandleConnection(c net.Conn) {
 	nameWasAccepted := false
 	clientName := ""
 	inGameLobby := false
+	prevLobbyLoop := false
 	var gameLobbyChan chan chan string
 	var index int
 	gameLobbyComChan := make(chan string)
@@ -42,15 +43,18 @@ func HandleConnection(c net.Conn) {
 				nameIndexChannel <- "d" + clientName
 				if inGameLobby {
 					gameLobbyChan <- gameLobbyComChan
-					gameLobbyComChan <- "l"
+					gameLobbyComChan <- "l" + clientName
 				}
 			}
 			return
 		}
 		fmt.Print(c.RemoteAddr().String(), ":::", message)
 		message = strings.TrimSuffix(message, "\n")
-
 		if !inGameLobby {
+			if prevLobbyLoop {
+				prevLobbyLoop = inGameLobby
+				continue
+			}
 			if !nameWasAccepted { //If Connection first started, the first thing the client will send is the requested username
 				nameWasAccepted, clientName = handleNaming(c, message)
 			} else {
@@ -58,24 +62,30 @@ func HandleConnection(c net.Conn) {
 				case 'r': //Request Lobbies
 					handleLobbyRequests(c, 'r', "")
 					break
+
 				case 'j': //Request Join Lobby
 					gameLobbyChan, index = handleJoinRequest(c, 'j', message, clientName, broadcastChan)
 					if gameLobbyChan != nil {
+						go handleBroadcasts(c, broadcastChan, &inGameLobby, clientName)
 						inGameLobby = true
 						c.Write([]byte(strconv.Itoa(index)))
 						handleLobbyRequests(c, 'r', "")
 					}
 					break
+
 				case 'n': //Request New Lobby
 					handleLobbyRequests(c, 'n', message)
 					break
 				}
 
 			}
-		} else {
-
+		} else { //Let the game lobby handle the messages
+			prevLobbyLoop = true
+			gameLobbyChan <- gameLobbyComChan
+			gameLobbyComChan <- message
 		}
 	}
+
 }
 
 func handleNaming(c net.Conn, message string) (bool, string) {
@@ -150,6 +160,29 @@ func InitConnSlice(maxClients int) {
 	clientAddrs = make([]string, 0, maxClients)
 }
 
-func handleBroadcasts() {
-
+func handleBroadcasts(c net.Conn, broadcast chan string, inGameLobby *bool, name string) {
+	for {
+		message := <-broadcast
+		c.Write([]byte(message))
+		if message == "e" {
+			// fmt.Println("Ending Game Thread")
+			*inGameLobby = false
+			// fmt.Println("Send Game Thread End")
+			return
+		}
+		if message[0] == 'l' {
+			fmt.Println(message[1:], "is leaving the game")
+			if message[1:] == name {
+				lobbyChan := make(chan string)
+				lobby.LobbyChannel <- lobbyChan
+				lobbyChan <- "r"
+				lobbyList := <-lobbyChan
+				fmt.Println("Sending lobbyList")
+				fmt.Println(lobbyList)
+				c.Write([]byte(lobbyList))
+			} else {
+				c.Write([]byte(message))
+			}
+		}
+	}
 }

@@ -18,6 +18,12 @@ void makeHostButton(){
     hostButton = new Button(x, y, w,h, "Host!");
 }
 
+Button makeLeave(){
+    int w = 120, h = 15;
+    Button leaveButton = new Button(10,gridSpace + 10, w,h, "Leave Game");
+    return leaveButton;
+}
+
 private class Button{
     int x,y,w,h;
     String text;
@@ -44,6 +50,7 @@ private class Button{
         if(isHovered()){
             stroke(247, 220, 111);
         }
+        rectMode(CORNER);
         rect(x,y,w,h);
         fill(0);
         textSize(h-1);

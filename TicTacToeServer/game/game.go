@@ -9,7 +9,7 @@ import (
 	"../lobby"
 )
 
-const emptyTimeAllowed = 30 * 1000000000 //Nanoseconds
+const emptyTimeAllowed = 1000 * 1000000000 //Nanoseconds
 
 //HandleGame - Goroutine that will handle the processes of the game
 func HandleGame(game *lobby.GameLobby) {
@@ -38,7 +38,6 @@ func HandleGame(game *lobby.GameLobby) {
 			switch request[0] {
 			case 'j':
 				//Join Game
-				fmt.Println("Processing Join!")
 				if game.Started {
 					commandChan <- "-2"
 					break
@@ -49,12 +48,12 @@ func HandleGame(game *lobby.GameLobby) {
 					commandChan <- "-1"
 					break
 				}
-				fmt.Println("SUCCESS IN JOINING", game.Name)
 				commandChan <- "0"
-				commandChan <- strconv.Itoa(i)
+				commandChan <- strconv.Itoa(i + 1)
 				broadcastChan := <-game.CommChan
 				game.ReverseChans[i] = broadcastChan
 				game.NumPlayer++
+				lastEmptyCheck = time.Now()
 				break
 			case 's':
 				//Start Game
@@ -82,8 +81,16 @@ func HandleGame(game *lobby.GameLobby) {
 				break
 			case 'l':
 				//Leave
-				game.RemovePlayerByChan(commandChan)
+				if game.PlayerNames[0] == request[1:] {
+					go endGame(game.Name)
+					broadcast(game, "l"+request[1:])
+					go broadcast(game, "e")
+					return
+				}
+				index := game.RemovePlayer(request[1:])
+				fmt.Println(index, "has left")
 				game.NumPlayer--
+				lastEmptyCheck = time.Now()
 				break
 			}
 		}
@@ -96,4 +103,10 @@ func broadcast(game *lobby.GameLobby, message string) {
 			game.ReverseChans[i] <- message
 		}
 	}
+}
+
+func endGame(name string) {
+	endChan := make(chan string)
+	lobby.LobbyChannel <- endChan
+	endChan <- "d" + name
 }

@@ -32,3 +32,14 @@ Client connectMain(String name){
     }
     return client;
 }
+
+String receive(){
+    String message = "";
+    while(true){
+        if(lobbyClient.available() == 0) continue;
+        char next = lobbyClient.readChar();
+        if(next == '\n') break;
+        message += next;
+    }
+    return message;
+}

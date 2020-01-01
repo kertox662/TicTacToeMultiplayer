@@ -27,7 +27,6 @@ void drawHostBoxes(){
 }
 
 void drawHostError(){
-    //println(hostError);
     fill(220, 20,20);
     stroke(220, 20,20);
     textSize(12);

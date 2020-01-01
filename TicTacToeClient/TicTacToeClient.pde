@@ -2,7 +2,7 @@ import processing.net.*;
 
 final int MAX_PLAYERS = 4;
 final int MAX_GRID = 32;
-final int gridSpace = 520;
+int gridSpace = 520;
 
 final String[] symbols = {"","X","O","\u25b2", "\u25C6"};
 final color[] colors = {color(255),color(231, 76, 60), color(52, 152, 219), color(46, 204, 113), color(247, 220, 111)};
@@ -59,11 +59,7 @@ void setup(){
 
 void draw(){
     background(255);
-    if(!inLobby){
-        drawNameBox();
-    }
-    //else if(!inGameLobby){
-    else if(inLobby || inGameLobby){
+    if(inLobby){
         for(int i = 0; i < lobbies.size(); i++){
             GameLobby gl = lobbies.get(i);
             gl.displayInfo(i);
@@ -74,6 +70,12 @@ void draw(){
         drawLobbyButtons();
         drawUserName();
         //println(hostButton.isHovered());
+    } else if(inGameLobby){
+        currentGame.display();
+        chatBox.display();
+    }
+    else{
+        drawNameBox();
     }
 }
 
@@ -132,6 +134,16 @@ void mouseClicked(){
             hostButton.actionTaken = true;
         }
     }
+    if(inGameLobby){
+        if(lobbyClient.available() > 0){
+            currentGame.handleServerMessage(receive());
+        }
+        currentGame.handleGridClick();
+        currentGame.leaveButton.handleClick();
+        if(currentGame.leaveButton.framesClicked > 0){
+            currentGame.leaveLobby();
+        }
+    }
 }
 
 void keyPressed(){
@@ -147,16 +159,8 @@ void keyPressed(){
             if(selectedBox == nameBox && nameBox.text.length() > 0){
                 lobbyClient = connectMain(nameBox.text);
                 if(lobbyClient != null){
-                    inLobby = true;
-                    pixelsUp = 0;
                     lobbyName = nameBox.text;
-                    nameBox.active = false;
-                    refresh.active = true;
-                    joinLobby.active = true;
-                    hostButton.active = true;
-                    for(int i = 2; i < 6; i++){
-                        boxes[i].active = true;
-                    }
+                    setLobbyStatus();
                     refreshLobbies();
                 }
             }
@@ -224,21 +228,3 @@ boolean checkWinner(int i, int j){
     return false;
     
 }
-
-//Click Checker, add back in later
-    //if(winner != 0) return;
-    //if(winner == 0) return;
-    //if(mouseX >= offset/2 && mouseX <= gridSpace-offset/2 && mouseY >= offset/2 && mouseY <= gridSpace-offset/2){
-    //    int x = (mouseX - offset/2)/cellSize, y = (mouseY - offset/2)/cellSize;
-    //    if(grid[y][x] != 0) 
-    //        return;
-    //    grid[y][x] = playerTurn;
-    //    if(checkWinner(y,x)){
-    //        winner = playerTurn;
-    //        if(mode == 1)
-    //            println("Player",winner,"playing", symbols[winner] ,"Wins!");
-    //        else 
-    //            println("Player",winner,"playing", colorNames[winner] ,"Wins!");
-    //    };
-    //    playerTurn = playerTurn%numPlayers + 1;
-    //}

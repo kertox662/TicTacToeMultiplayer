@@ -15,7 +15,7 @@ const MaxClients int = 1000
 const maxLobbies = 500
 
 //maxChanBuffer - Max size for a buffer on a channel
-const maxChanBuffer = 20
+const maxChanBuffer = 50
 
 //LobbyChannel - The channel to communicate with to access lobby data
 var LobbyChannel chan chan string
@@ -49,14 +49,13 @@ func (gl *GameLobby) EncodeMin() string {
 
 //AddPlayer - Adds a connection object and name to matching indices in the GameLobby object if they do not yet exist
 func (gl *GameLobby) AddPlayer(name string) (int, bool) {
-	fmt.Println("Looking for name", name)
 	if gl.NumPlayer >= gl.MaxPlayer {
-		fmt.Println("Too many Players")
+		// fmt.Println("Too many Players")
 		return 0, false
 	}
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == name {
-			fmt.Println("Already in game")
+			// fmt.Println("Already in game")
 			return 0, false
 		}
 	}
@@ -65,23 +64,24 @@ func (gl *GameLobby) AddPlayer(name string) (int, bool) {
 		if gl.PlayerNames[i] == "" {
 			gl.PlayerNames[i] = name
 			// gl.ReverseChans[i] = commChan
-			fmt.Println("Found")
+			// fmt.Println("Found")
 			return i, true
 		}
 	}
-	fmt.Println("No space?")
+	// fmt.Println("No space?")
 	return 0, false
 }
 
 //RemovePlayer - Removes a Channel object and name in the GameLobby object
-func (gl *GameLobby) RemovePlayer(name string) {
+func (gl *GameLobby) RemovePlayer(name string) int {
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == name {
 			gl.PlayerNames[i] = ""
 			gl.ReverseChans[i] = nil
-			break
+			return i
 		}
 	}
+	return -1
 }
 
 //RemovePlayerByChan - Removes a Channel object and name in the GameLobby object by the channel index
@@ -170,6 +170,7 @@ func deleteLobby(lobbyName string) {
 
 func getLobbyList() string {
 	list := ""
+	fmt.Println(len(lobbies))
 	for i := 0; i < len(lobbies); i++ {
 		if !lobbies[i].Started {
 			list += lobbies[i].Encode() + "\n"
