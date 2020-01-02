@@ -18,7 +18,7 @@ void makeChatBox(){ //Makes the chat box
     chatBox = new TextBox(gridSpace + 5, height - boxH - 5, boxW, boxH);
     boxes[1] = chatBox;
     chatBox.extendUp = true;
-    chatBox.limit = 72;
+    chatBox.limit = 140;
     chatBox.active = false;
 }
 
@@ -39,6 +39,7 @@ void makeHostBoxes(){ //Makes the hosting boxes
 private class TextBox{ //Holds text which can be added to or subtracted from
     String text;
     int x,y,w,h;
+    int numLines;
     
     boolean isSelected, active;
     int curIndex = 0;
@@ -53,19 +54,15 @@ private class TextBox{ //Holds text which can be added to or subtracted from
         this.text = "";
         active = false;
         limit = w/h * 2; //Default limit
+        numLines = 1;
     }
     
     TextBox(int x,int y,int w,int h, int lim){ //initialize with limit
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
-        this.text = "";
-        active = false;
+        this(x,y,w,h);
         limit = lim;
     }
     
-    void display(){ //Displays the rectangle, text, and cursor
+    void displayLegacy(){ //OLD WAY OF DISPLAYING STUFF, DEPRECATED
         ArrayList<String> lines = new ArrayList<String>();
         stroke(0);
         noFill();
@@ -99,6 +96,82 @@ private class TextBox{ //Holds text which can be added to or subtracted from
                     } 
                     float dist = textWidth(text.substring(totalIndex,curIndex));
                     line(x + dist + 3, y - h*(max(lines.size() - cursInd-1,0)), x + dist + 3, y - h*(max(lines.size() - cursInd-1,0))+h);
+                }
+            }catch(StringIndexOutOfBoundsException e){
+            }
+        }
+        else{ //Same idea as above, but with single string
+            rect(x,y,w,h);
+            fill(0);
+            text(this.text, x + 2, y + h*4/5);
+            if(isSelected && frameCount%cursorBlinkSpeed < cursorBlinkSpeed/2){
+                float dist = textWidth(text.substring(0,curIndex));
+                line(x + dist + 3, y + 2, x + dist + 3, y + h - 2);
+            }    
+        }
+        
+    }
+    
+    void display(){ //Displays the rectangle, text, and cursor
+        stroke(0);
+        fill(255);
+        textSize(h-1);
+        rectMode(CORNER);
+        textAlign(LEFT);
+        if(extendUp){ //If extending is possible
+           try{ //Without this, editing the string may cause problems
+                String[] words = text.split(" ");
+                StringList lines = new StringList();
+                String cur = "";
+                for(int ind = 0; ind < words.length;){
+                    if(textWidth(words[ind]+cur + " ") <= chatBox.w){
+                        if(!cur.equals(""))
+                            cur += " ";
+                        cur += words[ind];
+                        ind++;
+                    }else if(textWidth(words[ind]) > chatBox.w){
+                        if(!cur.equals("")){
+                            lines.append(cur);
+                        }
+                        cur = "";
+                        for(int c = 0; c < words[ind].length();c++){
+                            if(textWidth(cur+words[ind].charAt(c)) > chatBox.w){
+                                lines.append(cur);
+                                words[ind] = words[ind].substring(c);
+                                cur = "";
+                                break;
+                            } else{
+                                cur += words[ind].charAt(c);
+                            }
+                        }
+                    }
+                    else if(textWidth(words[ind] + cur + " ") > chatBox.w){
+                        if(!cur.equals(""))
+                            lines.append(cur);
+                        cur = words[ind];
+                        ind++;
+                    }
+                }
+                if(!cur.equals("")) lines.append(cur);
+                
+                numLines = max(lines.size(), 1);
+                rect(x,y-h*(numLines-1), w, numLines * h);//Draws the textbox rectangle with extended height
+                fill(0);
+                for(int i = 0; i < lines.size(); i++){ //Draws the text at certain heights within the rectangle
+                    String l = lines.get(i);
+                    text(l, x+2, y+h*4/5 - h*(lines.size()-i-1));
+                }
+                
+                if(isSelected && frameCount%cursorBlinkSpeed < cursorBlinkSpeed/2){ //If the box is selected, draw the cursor (a line)
+                    int cursInd = 0, totalIndex = 0;
+                    while(cursInd < lines.size() && curIndex > totalIndex + lines.get(cursInd).length()){
+                        totalIndex += lines.get(cursInd).length();
+                        cursInd++;
+                    } 
+                    float dist = 0;
+                    if(lines.size() > 0)
+                        dist = textWidth(lines.get(lines.size()-1));
+                    line(x + dist + 3, y  + 2, x + dist + 3, y + h - 2);
                 }
             }catch(StringIndexOutOfBoundsException e){
             }

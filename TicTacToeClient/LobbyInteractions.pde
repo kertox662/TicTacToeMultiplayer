@@ -92,7 +92,7 @@ void hostLobby(){
     while(lobbyClient.available() == 0){
     }
     String success = lobbyClient.readString(); //Gets success code of hosting a lobby
-    println(success);
+    //println(success);
     if(success.equals("1")){ //If Lobby name already exists
         hostError = "Lobby name matches existing lobby";
         return;
@@ -202,7 +202,7 @@ void sendMessage(){ //Sends chat message
 }
 
 void sendMove(int y, int x, int index){ //Sends a move the you make
-    println("SENDING MOVE", x,y,index);
+    //println("SENDING MOVE", x,y,index);
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -220,7 +220,7 @@ void sendLeave(){ //Sends the fact that you're leaving
     }
     lobbyClient.write("l" + lobbyName + '\n');
     String myLeaveMsg = receive();
-    println("LEAVE:",myLeaveMsg);
+    //println("LEAVE:",myLeaveMsg);
     lock.popFront();
 }
 

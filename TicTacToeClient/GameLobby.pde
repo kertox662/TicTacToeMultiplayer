@@ -170,7 +170,7 @@ private class GameLobby{
         }
     }
     
-    void displayChat(){//Displays Chat
+    void displayChatLegacy(){//OLD WAY OF DISPLAYING CHAT, DEPRECATED
         textAlign(LEFT);
         rectMode(CORNER);
         textSize(12);
@@ -189,6 +189,55 @@ private class GameLobby{
             for(int s = lines.size()-1; s >= 0; s--){ //Display them in reverse so they some out in the right order
                 h++;
                 text(lines.get(s), gridSpace + 5, height - chatBox.h - h*13 - 30, chatBox.w, height - chatBox.h - (h-1)*13 - 30);
+            }
+            
+        }
+    }
+    
+    void displayChat(){//Displays Chat
+        textAlign(LEFT);
+        rectMode(CORNER);
+        textSize(12);
+        int h = 0;
+        for(int i = chat.size()-1; i >= 0; i--){//For each chat message in reverse
+            String m = chat.get(i);
+            String[] words = m.split(" ");
+            StringList lines = new StringList();
+            String cur = "";
+            for(int ind = 0; ind < words.length;){
+                if(textWidth(words[ind]+cur + " ") <= chatBox.w){
+                    if(!cur.equals(""))
+                        cur += " ";
+                    cur += words[ind];
+                    ind++;
+                }else if(textWidth(words[ind]) > chatBox.w){
+                    if(!cur.equals("")){
+                        lines.append(cur);
+                    }
+                    cur = "";
+                    for(int c = 0; c < words[ind].length();c++){
+                        if(textWidth(cur+words[ind].charAt(c)) > chatBox.w){
+                            lines.append(cur);
+                            words[ind] = words[ind].substring(c);
+                            cur = "";
+                            break;
+                        } else{
+                            cur += words[ind].charAt(c);
+                        }
+                    }
+                }
+                else if(textWidth(words[ind] + cur + " ") > chatBox.w){
+                    if(!cur.equals(""))
+                        lines.append(cur);
+                    cur = words[ind];
+                    ind++;
+                }
+            }
+            if(!cur.equals(""))
+                lines.append(cur);
+            for(int s = lines.size()-1; s >= 0; s--){ //Display them in reverse so they some out in the right order
+                h++;
+                text(lines.get(s), gridSpace + 5, height - chatBox.h * chatBox.numLines - h*13 - 10, chatBox.w, height);
             }
             
         }

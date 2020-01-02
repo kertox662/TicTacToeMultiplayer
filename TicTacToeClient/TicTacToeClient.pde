@@ -14,7 +14,7 @@ int gridSpace = 520; //Space that the grid and lobbies will occupy
 //Markings to represent players
 final String[] symbols = {"","X","O","\u25b2", "\u25C6"};
 final color[] colors = {color(255),color(231, 76, 60), color(52, 152, 219), color(46, 204, 113), color(247, 220, 111)};
-final String[] colorNames = {"", "Red", "Blue", "Green", "Yellow"}; //DEPRECATED
+final String[] colorNames = {"", "Red", "Blue", "Green", "Yellow"};
 
 int offset = 40; // How far in to display Board and Lobbies
 //int offset = 0;

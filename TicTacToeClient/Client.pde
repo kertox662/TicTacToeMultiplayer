@@ -40,6 +40,6 @@ String receive(){ //Gets the next string up to '\n'
         if(next == '\n') break;//If '\n', you're done
         message += next;
     }
-    println("RECEIVED:", message);
+    //println("RECEIVED:", message);
     return message;
 }
