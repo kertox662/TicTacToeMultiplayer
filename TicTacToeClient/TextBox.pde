@@ -120,7 +120,22 @@ private class TextBox{ //Holds text which can be added to or subtracted from
         textAlign(LEFT);
         if(extendUp){ //If extending is possible
            try{ //Without this, editing the string may cause problems
-                String[] words = text.split(" ");
+                String[] rawWords = text.split(" ");
+                String endingSpace = "";
+                for(int i = text.length()-1; i >= 0; i--){
+                    if(text.charAt(i) != ' ') break;
+                    endingSpace += " ";
+                }
+                String[] words;
+                if(endingSpace.equals("")){
+                    words = rawWords;
+                } else{
+                    words = new String[rawWords.length + 1];
+                    for(int i = 0; i < rawWords.length; i++){
+                        words[i] = rawWords[i];
+                    }
+                    words[words.length-1] = endingSpace;
+                }
                 StringList lines = new StringList();
                 String cur = "";
                 for(int ind = 0; ind < words.length;){
