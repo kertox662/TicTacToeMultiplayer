@@ -139,7 +139,7 @@ func HandleGame(game *lobby.GameLobby) {
 				winnerInd := game.CheckWinner(r, c)
 				if winnerInd > 0 {
 					broadcast(game, "w"+strconv.Itoa(winnerInd))
-					broadcastSpec(spectatorChannels, "p"+move)
+					broadcastSpec(spectatorChannels, "w"+strconv.Itoa(winnerInd))
 					break
 				} else if !hasMultPlayers {
 					broadcast(game, "w"+strconv.Itoa(game.CurPlayer))
