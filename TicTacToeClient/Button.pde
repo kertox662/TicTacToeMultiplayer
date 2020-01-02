@@ -30,6 +30,12 @@ Button makeStart(){
     return startButton;
 }
 
+Button makeReset(){
+    int w = 120, h = 15;
+    Button resetButton = new Button(140, gridSpace + 10, w, h, "Reset Game");
+    return resetButton;
+}
+
 private class Button{
     int x,y,w,h;
     String text;

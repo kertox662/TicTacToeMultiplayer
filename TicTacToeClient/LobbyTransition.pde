@@ -11,6 +11,7 @@ void setLobbyStatus(){
     }
     //GameLobby Stuff
     inGameLobby = false;
+    currentGame = null;
     chatBox.active = false;
     refreshLobbies();
 }
@@ -21,6 +22,9 @@ void setInGameStatus(){
     refresh.active = false;
     joinLobby.active = false;
     hostButton.active = false;
+    hostButton.framesClicked = 0;
+    joinLobby.framesClicked = 0;
+    refresh.framesClicked = 0;
     for(int i = 2; i < 6; i++){
         boxes[i].active = false;
     }
@@ -28,4 +32,5 @@ void setInGameStatus(){
     chatBox.active = true;
     inGameLobby = true;
     currentGame.leaveButton.active = true;
+    currentGame.leaveButton.framesClicked = 0;
 }

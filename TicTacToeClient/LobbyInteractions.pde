@@ -188,3 +188,13 @@ void sendLeave(){
     lobbyClient.write("l" + lobbyName + '\n');
     lock.popFront();
 }
+
+void sendReset(){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("u" + lobbyName + "\n");
+    lock.popFront();
+}

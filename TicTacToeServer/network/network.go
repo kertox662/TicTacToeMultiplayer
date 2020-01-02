@@ -178,7 +178,7 @@ func handleBroadcasts(c net.Conn, broadcast chan string, inGameLobby *bool, clie
 		case 'l': //Player Leave
 			if message[1:] == clientName {
 				*inGameLobby = false
-				handleLobbyRequests(c, 'r', "")
+				// handleLobbyRequests(c, 'r', "") //No Longer Needed
 				return
 			}
 			c.Write([]byte(message + "\n"))

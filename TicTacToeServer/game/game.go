@@ -11,7 +11,7 @@ import (
 	"../logging"
 )
 
-const emptyTimeAllowed = 1000 * time.Second
+const emptyTimeAllowed = 30 * time.Second
 
 //HandleGame - Goroutine that will handle the processes of the game
 func HandleGame(game *lobby.GameLobby) {
@@ -24,15 +24,14 @@ func HandleGame(game *lobby.GameLobby) {
 	}
 
 	numPlaced := 0
+	needNewLeader := false
 
 	lastEmptyCheck := time.Now()
 	for {
 		//Do Gamey Stuff
 		if time.Now().Sub(lastEmptyCheck) >= emptyTimeAllowed {
 			if game.NumPlayer == 0 {
-				deleteChan := make(chan string)
-				lobby.LobbyChannel <- deleteChan
-				deleteChan <- "d" + game.Name
+				endGame(game.Name)
 				return
 			}
 
@@ -69,6 +68,11 @@ func HandleGame(game *lobby.GameLobby) {
 				send(game, "n"+strconv.Itoa(game.Leader), i)
 				go broadcast(game, "j"+request[1:]+","+index)
 				go broadcast(game, "m"+request[1:]+" has joined the lobby")
+				if needNewLeader {
+					game.Leader = i + 1
+					needNewLeader = false
+					go broadcast(game, "n"+strconv.Itoa(game.Leader))
+				}
 				logging.Log(game.Name + ":::" + request[1:] + " has joined")
 				lastEmptyCheck = time.Now()
 				break
@@ -121,35 +125,44 @@ func HandleGame(game *lobby.GameLobby) {
 				logging.Log(game.Name + ":::" + request[1:])
 				broadcast(game, request)
 				break
+			case 'u':
+				if request[1:] == game.PlayerNames[game.Leader-1] {
+					game.Reset()
+					var wq sync.WaitGroup
+					broadcastConc(game, "u", &wq)
+					wq.Wait()
+				}
 			case 'l': //Player Leave
-				needNewLeader := false
+				needNewLeader = false
 				game.NumPlayer--
 				if game.PlayerNames[game.Leader-1] == request[1:] {
 					needNewLeader = true
 				}
-				if game.NumPlayer == 0 && !game.Started {
-					endGame(game.Name)
-				}
+				// if game.NumPlayer == 0 && !game.Started {
+				// 	endGame(game.Name)
+				// }
 				var endingWG sync.WaitGroup
 				broadcastConc(game, "l"+request[1:], &endingWG)
 				endingWG.Wait()
 				pName, _ := game.RemovePlayer(request[1:])
-				if game.NumPlayer == 0 && !game.Started {
-					go broadcast(game, "e"+game.Name)
-					return
-				}
+				// if game.NumPlayer == 0 && !game.Started {
+				// 	go broadcast(game, "e"+game.Name)
+				// 	return
+				// }
 				logging.Log(pName + " has left " + game.Name)
 				go broadcast(game, "m"+request[1:]+" has left the lobby")
 
 				if needNewLeader {
 					if game.NumPlayer == 0 {
-						endGame(game.Name)
-						return
+						break
+						// endGame(game.Name)
+						// return
 					}
 					game.Leader = 0
 					for i := 0; i < game.MaxPlayer; i++ {
 						if game.PlayerNames[i] != "" {
 							game.Leader = i + 1
+							needNewLeader = false
 							break
 						}
 					}

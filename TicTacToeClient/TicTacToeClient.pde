@@ -1,7 +1,7 @@
 import processing.net.*;
 
-final String IP = "kiki.cubetex.net";
-//final String IP = "127.0.0.1";
+//final String IP = "kiki.cubetex.net";
+final String IP = "127.0.0.1";
 final int PORT = 42069;
 
 final int MAX_PLAYERS = 4;
@@ -147,6 +147,10 @@ void mouseClicked(){
             currentGame.startButton.handleClick();
             if(currentGame.startButton.framesClicked > 0){
                 sendStart();
+            }
+            currentGame.resetButton.handleClick();
+            if(currentGame.resetButton.framesClicked > 0){
+                sendReset();
             }
         } catch(NullPointerException e){
         }

@@ -17,7 +17,7 @@ private class GameLobby{
     int[][] grid;
     String[] players;
     boolean selected;
-    Button leaveButton, startButton;
+    Button leaveButton, startButton, resetButton;
     int index;
     StringList chat;
     int leader;
@@ -42,11 +42,19 @@ private class GameLobby{
         started = false;
         players = new String[maxP];
         startButton = makeStart();
+        resetButton = makeReset();
         cellSize = (gridSpace-offset) / gridSize;
     }
     
     GameLobby(String[] info){
         this(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),Integer.parseInt(info[3]),Integer.parseInt(info[4]), Integer.parseInt(info[5]));
+    }
+    
+    void reset(){
+        this.grid = new int[gridSize][gridSize];
+        this.winner = 0;
+        started = false;
+        this.playerTurn = 0;
     }
     
     void displayInfo(int index){
@@ -80,7 +88,15 @@ private class GameLobby{
         else{
             this.startButton.active = false;
         }
+        if(index == this.leader && winner > 0){
+            this.resetButton.active = true;
+        }
+        else{
+            this.resetButton.active = false;
+        }
+        
         displayStart();
+        displayReset();
         displayChat();
         displayInfo();
         displayPlayers();
@@ -133,6 +149,11 @@ private class GameLobby{
     void displayStart(){
         if(startButton.active){
             startButton.display();
+        }
+    }
+    void displayReset(){
+        if(resetButton.active){
+            resetButton.display();
         }
     }
     
@@ -272,6 +293,9 @@ private class GameLobby{
         }
         else if(command == 's'){ //Start of Game
             started = true;
+        }
+        else if(command == 'u'){ //Start of Game
+            reset();
         }
     }
 }

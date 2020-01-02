@@ -115,6 +115,17 @@ func (gl *GameLobby) IsEnded() bool {
 	return gl.ended
 }
 
+//Reset - Puts the necessary values back to default
+func (gl *GameLobby) Reset() {
+	gl.CurPlayer = 0
+	gl.Started = false
+	for i := 0; i < gl.MaxPlayer; i++ {
+		for j := 0; j < gl.MaxPlayer; j++ {
+			gl.Grid[i][j] = 0
+		}
+	}
+}
+
 //NewGameLobby - Minimum constructor for a GameLobby Object
 func NewGameLobby(name string, maxPlayer, gridSize, mode, target int) GameLobby {
 	newLobby := GameLobby{name, 0, maxPlayer, 0, 1, gridSize, mode, target, nil, false, nil, nil, nil, false}
