@@ -152,12 +152,21 @@ func NewGameLobby(name string, maxPlayer, gridSize, mode, target int) GameLobby 
 }
 
 //NewGameLobbyFromString - Makes a new GameLobby object from an encoded string
-func NewGameLobbyFromString(data []string) GameLobby {
-	maxPlayer, _ := strconv.Atoi(data[1])
-	mode, _ := strconv.Atoi(data[2])
-	gridSize, _ := strconv.Atoi(data[3])
-	target, _ := strconv.Atoi(data[4])
-	return NewGameLobby(data[0], maxPlayer, gridSize, mode, target)
+func NewGameLobbyFromString(dataString string) (GameLobby, bool) {
+	var dummyLobby GameLobby
+
+	data := strings.Split(dataString, ",")
+	if len(data) != 5 {
+		return dummyLobby, true
+	}
+	maxPlayer, err1 := strconv.Atoi(data[1])
+	mode, err2 := strconv.Atoi(data[2])
+	gridSize, err3 := strconv.Atoi(data[3])
+	target, err4 := strconv.Atoi(data[4])
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		return dummyLobby, true
+	}
+	return NewGameLobby(data[0], maxPlayer, gridSize, mode, target), false
 }
 
 //GetLobby - Returns a pointer to the game lobby with the requested name
@@ -241,9 +250,6 @@ func deleteLobby(lobbyName string) {
 func getLobbyList() string {
 	list := ""
 	for i := 0; i < len(lobbies); i++ {
-		// if lobbies[i] != nil && !lobbies[i].Started {
-		// 	list += lobbies[i].Encode() + "\n"
-		// }
 		if lobbies[i] != nil {
 			list += lobbies[i].Encode() + "\n"
 		}
@@ -268,7 +274,11 @@ func HandleLobbies() {
 		case 'j':
 			break
 		case 'n':
-			gl := NewGameLobbyFromString(strings.Split(request[1:], ","))
+			gl, err := NewGameLobbyFromString(request[1:])
+			if err {
+				comChan <- "2"
+				break
+			}
 			success := addNewLobby(&gl)
 			comChan <- strconv.Itoa(success)
 			if success == 0 {
