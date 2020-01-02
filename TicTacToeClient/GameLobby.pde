@@ -189,7 +189,7 @@ private class GameLobby{
         text("Connect: " + this.target, 10, gridSpace + 55);
         text("Size: " + this.gridSize + "x" + this.gridSize, 10, gridSpace + 70);
         String currentPlayer;
-        if(!started) //If the game hasn't started, no current player
+        if(!started || playerTurn == 0) //If the game hasn't started, no current player
             currentPlayer = "N/A";
         else if(mode == 1) //Otherwise show symbol or colored box
             currentPlayer = symbols[playerTurn];
@@ -213,7 +213,7 @@ private class GameLobby{
             if(mode == 1)
                 text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
             else if(mode == 2)
-                text(colors[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
+                text(colorNames[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
         }
         else
             text("No more moves, tie game!", gridSpace*3/4, height - 10);
@@ -221,6 +221,7 @@ private class GameLobby{
     
     void leaveLobby(){ //Leaves the current game and goes back to the main lobby
         if(currentGame != this) return;
+        inGameLobby = false;
         sendLeave();
         currentGame = null;
         setLobbyStatus(); //Updates to lobby status

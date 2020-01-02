@@ -184,6 +184,7 @@ void sendLeave(){ //Sends the fact that you're leaving
         //Pass
     }
     lobbyClient.write("l" + lobbyName + '\n');
+    String myLeaveMsg = receive();
     lock.popFront();
 }
 

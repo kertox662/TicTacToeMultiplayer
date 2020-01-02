@@ -63,6 +63,10 @@ void draw(){
         drawUserName();
         drawAmountOnline();
     } else if(inGameLobby){//Game Lobby Display
+        //long timeStamp = System.nanoTime();
+        //lock.addAccess(timeStamp);
+        //while(lock.peekFront() != timeStamp){}
+        //lock.popFront();
         while(lobbyClient.available() > 0 && inGameLobby){//Get all server input and process it
             currentGame.handleServerMessage(receive());
         }

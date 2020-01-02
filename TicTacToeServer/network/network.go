@@ -16,6 +16,7 @@ import (
 var clientAddrs []string
 
 const maxClientBuffer = 20
+const maxBroadCastBuffer = 30
 
 //HandleConnection - Handles the interaction between the server and incoming clients as they enter the lobby
 func HandleConnection(c net.Conn) {
@@ -30,7 +31,7 @@ func HandleConnection(c net.Conn) {
 	var gameLobbyChan chan chan string
 	var index int
 	gameLobbyComChan := make(chan string)
-	broadcastChan := make(chan string)
+	broadcastChan := make(chan string, maxBroadCastBuffer)
 	for {
 		message, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
@@ -52,6 +53,7 @@ func HandleConnection(c net.Conn) {
 		}
 		message = strings.TrimSuffix(message, "\n")
 		logging.Log(fmt.Sprintln(c.RemoteAddr().String(), ":::", message))
+		// fmt.Println(c.RemoteAddr().String(), ":::", message)
 		if !inGameLobby {
 			if !nameWasAccepted { //If Connection first started, the first thing the client will send is the requested username
 				nameWasAccepted, clientName = handleNaming(c, message)
@@ -163,7 +165,7 @@ func InitConnSlice(maxClients int) {
 }
 
 func handleBroadcasts(c net.Conn, broadcast chan string, inGameLobby *bool, clientName, lobbyName string, gl *lobby.GameLobby) {
-	for {
+	for *inGameLobby {
 		message := <-broadcast
 		command := message[0]
 		args := message[1:]
@@ -176,12 +178,10 @@ func handleBroadcasts(c net.Conn, broadcast chan string, inGameLobby *bool, clie
 			}
 			break
 		case 'l': //Player Leave
-			if message[1:] == clientName {
-				*inGameLobby = false
-				// handleLobbyRequests(c, 'r', "") //No Longer Needed
-				return
-			}
 			c.Write([]byte(message + "\n"))
+			if args == clientName {
+				*inGameLobby = false
+			}
 			break
 		case 'r':
 			handleLobbyRequests(c, 'r', "")

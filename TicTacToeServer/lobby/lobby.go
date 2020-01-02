@@ -1,6 +1,7 @@
 package lobby
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -119,8 +120,8 @@ func (gl *GameLobby) IsEnded() bool {
 func (gl *GameLobby) Reset() {
 	gl.CurPlayer = 0
 	gl.Started = false
-	for i := 0; i < gl.MaxPlayer; i++ {
-		for j := 0; j < gl.MaxPlayer; j++ {
+	for i := 0; i < gl.GridSize; i++ {
+		for j := 0; j < gl.GridSize; j++ {
 			gl.Grid[i][j] = 0
 		}
 	}
@@ -191,6 +192,7 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 		diag1 += dist[r][r]
 		diag2 += dist[r][2-r]
 	}
+	fmt.Println(vert, horz, diag1, diag2)
 	if vert >= gl.Target || horz >= gl.Target || diag1 >= gl.Target || diag2 >= gl.Target {
 		return val
 	}

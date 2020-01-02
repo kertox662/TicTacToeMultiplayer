@@ -131,6 +131,8 @@ func HandleGame(game *lobby.GameLobby) {
 					var wq sync.WaitGroup
 					broadcastConc(game, "u", &wq)
 					wq.Wait()
+					broadcast(game, "mResetting the board")
+					numPlaced = 0
 				}
 			case 'l': //Player Leave
 				needNewLeader = false
@@ -141,6 +143,7 @@ func HandleGame(game *lobby.GameLobby) {
 				// if game.NumPlayer == 0 && !game.Started {
 				// 	endGame(game.Name)
 				// }
+
 				var endingWG sync.WaitGroup
 				broadcastConc(game, "l"+request[1:], &endingWG)
 				endingWG.Wait()
