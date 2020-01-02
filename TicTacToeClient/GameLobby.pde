@@ -182,8 +182,16 @@ private class GameLobby{
         String currentPlayer;
         if(!started)
             currentPlayer = "N/A";
-        else
+        else if(mode == 1)
             currentPlayer = symbols[playerTurn];
+        else{
+            currentPlayer = "";
+            rectMode(CENTER);
+            fill(colors[playerTurn]);
+            stroke(0);
+            rect(textWidth("Current Player: ") + 15, gridSpace + 80, 10, 10);
+        }
+        fill(0);
         text("Current Player: " + currentPlayer, 10, gridSpace + 85);
         text("Status: " + ((started)?"Playing":"Waiting to begin"), 10, gridSpace + 100 );
     }
@@ -192,7 +200,10 @@ private class GameLobby{
         textAlign(CENTER);
         textSize(18);
         fill(0);
-        text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
+        if(winner <= this.maxPlayers)
+            text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
+        else
+            text("No more moves, tie game!", gridSpace*3/4, height - 10);
     }
     
     void leaveLobby(){

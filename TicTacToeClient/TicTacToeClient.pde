@@ -1,7 +1,7 @@
 import processing.net.*;
 
-final String IP = "kiki.cubetex.net";
-//final String IP = "127.0.0.1";
+//final String IP = "kiki.cubetex.net";
+final String IP = "127.0.0.1";
 final int PORT = 42069;
 
 final int MAX_PLAYERS = 4;
