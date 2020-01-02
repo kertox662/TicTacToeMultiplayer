@@ -41,8 +41,13 @@ void drawHostError(){ //Draws the host error if it exists
 
 void drawLobbyButtons(){ //Draws all of the lobby buttons
     refresh.display();
-    joinLobby.display();
     hostButton.display();
+    if(selectedLobby == null || (!selectedLobby.started && !selectedLobby.isFull())){
+        joinLobby.text = "Join!";
+    } else{
+        joinLobby.text = "Spectate!";
+    }
+    joinLobby.display();
 }
 
 void drawUserName(){ //Draws the client's username in the bottom right

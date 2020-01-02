@@ -74,6 +74,15 @@ func HandleConnection(c net.Conn) {
 					}
 					break
 
+				case 'o':
+					gameLobbyChan = handleSpectateRequest(c, 'o', message, clientName, broadcastChan)
+					if gameLobbyChan != nil {
+						handleLobbyRequests(c, 'r', "")
+						inGameLobby = true
+						go handleBroadcasts(c, broadcastChan, &inGameLobby, clientName, message[1:], lobby.GetLobby(message[1:]))
+					}
+					break
+
 				case 'n': //Request New Lobby
 					handleLobbyRequests(c, 'n', message)
 					break
@@ -157,6 +166,28 @@ func handleJoinRequest(c net.Conn, command rune, message, name string, broadcast
 		return commChan, myIndex
 	}
 	return nil, -1
+}
+
+func handleSpectateRequest(c net.Conn, command rune, message, name string, broadcastChan chan string) chan chan string {
+	lobbyChan := make(chan string)
+	gl := lobby.GetLobby(message[1:])
+	if gl == nil {
+		c.Write([]byte("1")) //Game no longer exists
+		return nil
+	}
+	commChan := gl.CommChan
+	commChan <- lobbyChan
+	lobbyChan <- "o" + name
+	success := <-lobbyChan
+	if success == "2" {
+		c.Write([]byte("2")) //Something went wrong?
+	}
+	if success == "0" { //SUCCESS
+		c.Write([]byte("0"))
+		commChan <- broadcastChan
+		return commChan
+	}
+	return nil
 }
 
 //InitConnSlice - Makes the slice with maxClient capacity
