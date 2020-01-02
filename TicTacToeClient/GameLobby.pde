@@ -29,13 +29,14 @@ private class GameLobby{
         this.name = name;
         this.curPlayers = curP;
         this.maxPlayers = maxP;
+        this.playerTurn = 0;
         this.mode = mode;
         this.gridSize = gridSize;
         this.grid = new int[gridSize][gridSize];
         this.selected = false;
         this.target = target;
         this.leaveButton = makeLeave();
-        this.index = -1;
+        this.index = -100;
         this.winner = 0;
         this.chat = new StringList();
         this.leader = 1;
@@ -208,7 +209,8 @@ private class GameLobby{
     void displaySpectators(){
         textAlign(LEFT);
         textSize(12);
-        text("Number of Spectators:" + spectators, gridSpace* 3 / 4, gridSpace + 30 + maxPlayers*20);
+        fill(0);
+        text("Spectators:" + spectators, gridSpace* 3 / 4, gridSpace + 30 + maxPlayers*20);
     }
     
     void displayInfo(){//Displays in game lobby info on the bottom left
@@ -274,7 +276,7 @@ private class GameLobby{
         if(command == 'e'){ //End of Game (Only an unstarted game)
             while(lobbyClient.available() > 0)
                 message = receive(); //Takes care of all of the buffer backlog
-            joinError = "Host has left unstarted game";
+            joinError = "Empty for too long";
             setLobbyStatus(); //Go to lobby
         }
         else if(command == 'm'){ //Chat Message -> add to chat list

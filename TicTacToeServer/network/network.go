@@ -202,7 +202,7 @@ func handleBroadcasts(c net.Conn, broadcast chan string, inGameLobby *bool, clie
 		args := message[1:]
 		switch command {
 		case 'e': //Game End
-			if args == lobbyName && gl.IsEnded() && *inGameLobby {
+			if args == lobbyName && *inGameLobby {
 				c.Write([]byte("e\n"))
 				*inGameLobby = false
 				return

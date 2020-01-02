@@ -1,7 +1,6 @@
 package lobby
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -197,7 +196,7 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 		diag1 += dist[r][r]
 		diag2 += dist[r][2-r]
 	}
-	fmt.Println(vert, horz, diag1, diag2)
+	// fmt.Println(vert, horz, diag1, diag2)
 	if vert >= gl.Target || horz >= gl.Target || diag1 >= gl.Target || diag2 >= gl.Target {
 		return val
 	}

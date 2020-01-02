@@ -35,6 +35,7 @@ func HandleGame(game *lobby.GameLobby) {
 		//Do Gamey Stuff
 		if time.Now().Sub(lastEmptyCheck) >= emptyTimeAllowed {
 			if game.NumPlayer == 0 {
+				broadcastSpec(spectatorChannels, "e"+game.Name)
 				endGame(game.Name)
 				return
 			}
@@ -171,10 +172,11 @@ func HandleGame(game *lobby.GameLobby) {
 				}
 			case 'l': //Player Leave
 				if i := isSpectator(request[1:], spectatorNames); i != -1 {
+					go broadcast(game, "m"+request[1:]+" is no longer spectating")
+					broadcastSpec(spectatorChannels, "m"+request[1:]+" has left the lobby")
+					sendSpec(spectatorChannels[i], request)
 					spectatorChannels = append(spectatorChannels[:i], spectatorChannels[i+1:]...)
 					spectatorNames = append(spectatorNames[:i], spectatorNames[i+1:]...)
-					go broadcast(game, "m"+request[1:]+" is no longer spectating")
-					go broadcastSpec(spectatorChannels, "m"+request[1:]+" has left the lobby")
 					go broadcast(game, "o"+strconv.Itoa(len(spectatorChannels)))
 					go broadcastSpec(spectatorChannels, "o"+strconv.Itoa(len(spectatorChannels)))
 					break

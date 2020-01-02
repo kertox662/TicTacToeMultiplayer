@@ -202,6 +202,7 @@ void sendMessage(){ //Sends chat message
 }
 
 void sendMove(int y, int x, int index){ //Sends a move the you make
+    println("SENDING MOVE", x,y,index);
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
