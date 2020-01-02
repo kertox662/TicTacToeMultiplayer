@@ -203,17 +203,6 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 	return 0
 }
 
-func (gl *GameLobby) checkTie() int {
-	for i := 0; i < gl.GridSize; i++ {
-		for j := 0; j < gl.GridSize; j++ {
-			if gl.Grid[i][j] == 0 {
-				return 0
-			}
-		}
-	}
-	return gl.MaxPlayer + 1
-}
-
 func addNewLobby(gl *GameLobby) int {
 	for i := 0; i < len(lobbies); i++ {
 		if lobbies[i].Name == gl.Name {

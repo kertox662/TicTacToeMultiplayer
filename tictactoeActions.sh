@@ -2,7 +2,7 @@ if [ $# -eq 1 ]; then
     if [ $1 == kill  ]; then
         echo "Killing Remote Process"
         #ssh kiki ls #< killCommand;
-        ssh kiki /bin/bash < killCommand;
+        ssh kiki /bin/bash < killCommand.txt;
     elif [ $1 == start ]; then
         echo "Starting Remote Process"
         echo "nohup ~/TicTacToeServer/tictactoeBin >/dev/null 2>&1 &" | ssh kiki /bin/bash;

@@ -1,4 +1,9 @@
 logs
-killCommand
-tictactoeActions.sh
-TicTacToeServer/tictactoeBin
+
+*.log
+
+killCommand.txt
+
+*.sh
+
+*Bin
