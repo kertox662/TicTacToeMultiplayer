@@ -1,7 +1,6 @@
 package lobby
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -42,6 +41,11 @@ type GameLobby struct {
 //Encode - Turns the GameLobby data into a string
 func (gl *GameLobby) Encode() string {
 	data := []string{gl.Name, strconv.Itoa(gl.NumPlayer), strconv.Itoa(gl.MaxPlayer), strconv.Itoa(gl.Mode), strconv.Itoa(gl.GridSize), strconv.Itoa(gl.Target)}
+	if gl.Started {
+		data = append(data, "1")
+	} else {
+		data = append(data, "0")
+	}
 	return strings.Join(data, ",")
 }
 
@@ -192,7 +196,7 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 		diag1 += dist[r][r]
 		diag2 += dist[r][2-r]
 	}
-	fmt.Println(vert, horz, diag1, diag2)
+	// fmt.Println(vert, horz, diag1, diag2)
 	if vert >= gl.Target || horz >= gl.Target || diag1 >= gl.Target || diag2 >= gl.Target {
 		return val
 	}
@@ -248,7 +252,10 @@ func deleteLobby(lobbyName string) {
 func getLobbyList() string {
 	list := ""
 	for i := 0; i < len(lobbies); i++ {
-		if lobbies[i] != nil && !lobbies[i].Started {
+		// if lobbies[i] != nil && !lobbies[i].Started {
+		// 	list += lobbies[i].Encode() + "\n"
+		// }
+		if lobbies[i] != nil {
 			list += lobbies[i].Encode() + "\n"
 		}
 	}

@@ -26,11 +26,16 @@ func HandleGame(game *lobby.GameLobby) {
 	numPlaced := 0
 	needNewLeader := false
 
+	spectatorChannels := make([]chan string, 0)
+	spectatorNames := make([]string, 0)
+	playerMoves := make([]string, 0)
+
 	lastEmptyCheck := time.Now()
 	for {
 		//Do Gamey Stuff
 		if time.Now().Sub(lastEmptyCheck) >= emptyTimeAllowed {
 			if game.NumPlayer == 0 {
+				broadcastSpec(spectatorChannels, "e"+game.Name)
 				endGame(game.Name)
 				return
 			}
@@ -65,9 +70,12 @@ func HandleGame(game *lobby.GameLobby) {
 						go send(game, message, i)
 					}
 				}
+				send(game, "o"+strconv.Itoa(len(spectatorChannels)), i)
 				send(game, "n"+strconv.Itoa(game.Leader), i)
 				go broadcast(game, "j"+request[1:]+","+index)
+				go broadcastSpec(spectatorChannels, "j"+request[1:]+","+index)
 				go broadcast(game, "m"+request[1:]+" has joined the lobby")
+				go broadcastSpec(spectatorChannels, "m"+request[1:]+" has joined the lobby")
 				if needNewLeader {
 					game.Leader = i + 1
 					needNewLeader = false
@@ -76,6 +84,23 @@ func HandleGame(game *lobby.GameLobby) {
 				logging.Log(game.Name + ":::" + request[1:] + " has joined")
 				lastEmptyCheck = time.Now()
 				break
+			case 'o': //Spectator (Observer)
+				commandChan <- "0"
+				broadcastChan := <-game.CommChan
+				spectatorChannels = append(spectatorChannels, broadcastChan)
+				spectatorNames = append(spectatorNames, request[1:])
+				for i := 0; i < len(playerMoves); i++ {
+					go sendSpec(broadcastChan, playerMoves[i])
+				}
+				for j := 0; j < game.MaxPlayer; j++ {
+					if game.PlayerNames[j] != "" {
+						message := "j" + game.PlayerNames[j] + "," + strconv.Itoa(j)
+						go sendSpec(broadcastChan, message)
+					}
+				}
+				go broadcast(game, "o"+strconv.Itoa(len(spectatorChannels)))
+				go broadcastSpec(spectatorChannels, "o"+strconv.Itoa(len(spectatorChannels)))
+				break
 			case 's':
 				//Start Game
 				name := request[1:]
@@ -83,6 +108,7 @@ func HandleGame(game *lobby.GameLobby) {
 					game.Started = true
 					var wg sync.WaitGroup
 					broadcastConc(game, "s", &wg)
+					go broadcastSpec(spectatorChannels, "s")
 					wg.Wait()
 					hasMultPlayers := game.NextPlayerTurn()
 					if !hasMultPlayers {
@@ -106,60 +132,75 @@ func HandleGame(game *lobby.GameLobby) {
 				game.Grid[r][c] = index
 				numPlaced++
 				broadcast(game, "p"+move)
+				broadcastSpec(spectatorChannels, "p"+move)
+				playerMoves = append(playerMoves, request)
 				logging.Log(fmt.Sprintf("%s:::Move by %d to %d,%d", game.Name, index, r, c))
 				hasMultPlayers := game.NextPlayerTurn()
 				winnerInd := game.CheckWinner(r, c)
 				if winnerInd > 0 {
 					broadcast(game, "w"+strconv.Itoa(winnerInd))
+					broadcastSpec(spectatorChannels, "p"+move)
 					break
 				} else if !hasMultPlayers {
 					broadcast(game, "w"+strconv.Itoa(game.CurPlayer))
+					broadcastSpec(spectatorChannels, "w"+strconv.Itoa(game.CurPlayer))
 				} else if numPlaced >= game.GridSize*game.GridSize {
 					broadcast(game, "w"+strconv.Itoa(game.MaxPlayer+1))
+					broadcastSpec(spectatorChannels, "w"+strconv.Itoa(game.MaxPlayer+1))
 				} else {
 					broadcast(game, "t"+strconv.Itoa(game.CurPlayer))
+					broadcastSpec(spectatorChannels, "t"+strconv.Itoa(game.CurPlayer))
 				}
 
 				break
 			case 'm': //Player Chat message Message
 				logging.Log(game.Name + ":::" + request[1:])
-				broadcast(game, request)
+				go broadcast(game, request)
+				go broadcastSpec(spectatorChannels, request)
 				break
 			case 'u':
 				if request[1:] == game.PlayerNames[game.Leader-1] {
 					game.Reset()
 					var wq sync.WaitGroup
-					broadcastConc(game, "u", &wq)
+					go broadcastConc(game, "u", &wq)
+					go broadcastSpec(spectatorChannels, "u")
 					wq.Wait()
-					broadcast(game, "mResetting the board")
+					go broadcast(game, "mResetting the board")
+					go broadcastSpec(spectatorChannels, "mResetting the board")
 					numPlaced = 0
+					playerMoves = make([]string, 0)
 				}
 			case 'l': //Player Leave
+				if i := isSpectator(request[1:], spectatorNames); i != -1 {
+					go broadcast(game, "m"+request[1:]+" is no longer spectating")
+					broadcastSpec(spectatorChannels, "m"+request[1:]+" has left the lobby")
+					sendSpec(spectatorChannels[i], request)
+					spectatorChannels = append(spectatorChannels[:i], spectatorChannels[i+1:]...)
+					spectatorNames = append(spectatorNames[:i], spectatorNames[i+1:]...)
+					go broadcast(game, "o"+strconv.Itoa(len(spectatorChannels)))
+					go broadcastSpec(spectatorChannels, "o"+strconv.Itoa(len(spectatorChannels)))
+					break
+				}
+
 				needNewLeader = false
 				game.NumPlayer--
 				if game.PlayerNames[game.Leader-1] == request[1:] {
 					needNewLeader = true
 				}
-				// if game.NumPlayer == 0 && !game.Started {
-				// 	endGame(game.Name)
-				// }
 
 				var endingWG sync.WaitGroup
 				broadcastConc(game, "l"+request[1:], &endingWG)
+				go broadcastSpec(spectatorChannels, "l"+request[1:])
 				endingWG.Wait()
 				pName, _ := game.RemovePlayer(request[1:])
-				// if game.NumPlayer == 0 && !game.Started {
-				// 	go broadcast(game, "e"+game.Name)
-				// 	return
-				// }
+
 				logging.Log(pName + " has left " + game.Name)
 				go broadcast(game, "m"+request[1:]+" has left the lobby")
+				go broadcastSpec(spectatorChannels, "m"+request[1:]+" has left the lobby")
 
 				if needNewLeader {
 					if game.NumPlayer == 0 {
 						break
-						// endGame(game.Name)
-						// return
 					}
 					game.Leader = 0
 					for i := 0; i < game.MaxPlayer; i++ {
@@ -207,8 +248,27 @@ func sendConc(game *lobby.GameLobby, message string, index int, wg *sync.WaitGro
 	wg.Done()
 }
 
+func broadcastSpec(channels []chan string, message string) {
+	for i := 0; i < len(channels); i++ {
+		go sendSpec(channels[i], message)
+	}
+}
+
+func sendSpec(channel chan string, message string) {
+	channel <- message
+}
+
 func endGame(name string) {
 	endChan := make(chan string)
 	lobby.LobbyChannel <- endChan
 	endChan <- "d" + name
+}
+
+func isSpectator(name string, spectators []string) int {
+	for i := 0; i < len(spectators); i++ {
+		if spectators[i] == name {
+			return i
+		}
+	}
+	return -1
 }

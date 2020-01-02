@@ -1,7 +1,7 @@
 import processing.net.*;
 
-final String IP = "kiki.cubetex.net"; //The IP the client Connects to
-//final String IP = "127.0.0.1";
+//final String IP = "kiki.cubetex.net"; //The IP the client Connects to
+final String IP = "127.0.0.1";
 final int PORT = 42069; //The port at which the client connects at
 
 final int MAX_PLAYERS = 4; //Limits for hosting textboxes
@@ -63,14 +63,11 @@ void draw(){
         drawUserName();
         drawAmountOnline();
     } else if(inGameLobby){//Game Lobby Display
-        //long timeStamp = System.nanoTime();
-        //lock.addAccess(timeStamp);
-        //while(lock.peekFront() != timeStamp){}
-        //lock.popFront();
         while(lobbyClient.available() > 0 && inGameLobby){//Get all server input and process it
             currentGame.handleServerMessage(receive());
         }
-        currentGame.display(); //Display Grid
+        if(currentGame!=null)
+            currentGame.display(); //Display Grid
         chatBox.display();
     }
     else{//Before Connecting, display nameBox

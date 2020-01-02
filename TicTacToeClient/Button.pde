@@ -12,7 +12,7 @@ void makeRefresh(){
 }
 
 void makeJoin(){
-    int w = 60, h = 15;
+    int w = 80, h = 15;
     joinLobby = new Button((gridSpace-w)/2, gridSpace + h + 10, w,h, "Join!");
 }
 

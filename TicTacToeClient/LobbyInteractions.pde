@@ -107,6 +107,10 @@ void hostLobby(){
 }
 
 void joinLobby(String name){ //Joins to the lobby with specified name
+    if(selectedLobby != null && (selectedLobby.started || selectedLobby.isFull())){
+        spectateGame(name);
+        return;
+    }
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -147,6 +151,36 @@ void joinLobby(String name){ //Joins to the lobby with specified name
     refreshLobbies();
 }
 
+void spectateGame(String name){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("o"+name+'\n'); //Requests Spectating
+    while(lobbyClient.available() == 0){
+    }
+    char c = lobbyClient.readChar(); //Success Code 
+    joinError = "";
+    if(c == '0'){ //If success
+        while(lobbyClient.available() == 0){
+        }
+        receiveLobbies(); //Update lobby data
+        for(GameLobby l : lobbies){ //Find the lobby that you just joined and set it as the current
+            if(name.equals(l.name)){
+                currentGame = l;
+                currentGame.isSpectator = true;
+                break;
+            }
+        }
+        setInGameStatus(); //Sets variable for in game mode
+    }
+    else{
+        joinError = "Game no longer exists";
+    }
+    lock.popFront();
+}
+
 void sendStart(){ //Sends the start message to server
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
@@ -168,6 +202,7 @@ void sendMessage(){ //Sends chat message
 }
 
 void sendMove(int y, int x, int index){ //Sends a move the you make
+    println("SENDING MOVE", x,y,index);
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -185,6 +220,7 @@ void sendLeave(){ //Sends the fact that you're leaving
     }
     lobbyClient.write("l" + lobbyName + '\n');
     String myLeaveMsg = receive();
+    println("LEAVE:",myLeaveMsg);
     lock.popFront();
 }
 

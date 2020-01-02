@@ -21,31 +21,41 @@ private class GameLobby{
     int leader; //The leader of the lobby, really only matters if this client is the leader
     boolean started;
     int cellSize;
+    boolean isSpectator;
+    int spectators;
     
     
-    GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target){
+    GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target, boolean isStarted){
         this.name = name;
         this.curPlayers = curP;
         this.maxPlayers = maxP;
+        this.playerTurn = 0;
         this.mode = mode;
         this.gridSize = gridSize;
         this.grid = new int[gridSize][gridSize];
         this.selected = false;
         this.target = target;
         this.leaveButton = makeLeave();
-        this.index = -1;
+        this.index = -100;
         this.winner = 0;
         this.chat = new StringList();
         this.leader = 1;
-        this.started = false;
+        this.started = isStarted;
         this.players = new String[maxP];
         this.startButton = makeStart();
         this.resetButton = makeReset();
         this.cellSize = (gridSpace-offset) / gridSize;
+        this.isSpectator = false;
+        this.spectators = 0;
     }
     
     GameLobby(String[] info){//Lobby from String
-        this(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),Integer.parseInt(info[3]),Integer.parseInt(info[4]), Integer.parseInt(info[5]));
+        this(info[0], Integer.parseInt(info[1]), //Current Players
+                      Integer.parseInt(info[2]), //Max Players
+                      Integer.parseInt(info[3]), //Mode
+                      Integer.parseInt(info[4]), //Size
+                      Integer.parseInt(info[5]), //Connect
+                      ((info[6].equals("1"))?true:false) ); //Is it started
     }
     
     void reset(){//Resets all aspects that are required for a new game
@@ -55,15 +65,25 @@ private class GameLobby{
         this.playerTurn = 0;
     }
     
+    boolean isFull(){
+        return curPlayers >= maxPlayers;
+    }
+    
     void displayInfo(int index){ //Displays the information about the lobby in main Lobby
         stroke(0);
         noFill();
         if(selected)
             fill(39, 174, 96);
         rectMode(CORNER);
+        //println(name, started);
+        if(started){
+            fill(colors[1]);
+            if(selected)
+                stroke(colors[4]);
+        }
         rect(offset/2, index * LOBBY_HEIGHT - pixelsUp, gridSpace - offset, LOBBY_HEIGHT); //Draws the rectangle
-        
         fill(0);
+        stroke(0);
         textAlign(LEFT, CENTER);
         textSize(16);
         text(this.name, offset/2 + 10, index*LOBBY_HEIGHT + LOBBY_HEIGHT/2 - pixelsUp); //Displays Name
@@ -78,6 +98,7 @@ private class GameLobby{
     }
     
     void display(){ //Game Lobby Display
+        //println(isSpectator);
         displayGrid();
         displayLeave();
         if(index == this.leader && !started){
@@ -98,6 +119,9 @@ private class GameLobby{
         displayChat();
         displayInfo();
         displayPlayers();
+        if(spectators > 0){
+            displaySpectators();
+        }
         if(winner > 0){
             displayWinner();
         }
@@ -182,6 +206,13 @@ private class GameLobby{
         }
     }
     
+    void displaySpectators(){
+        textAlign(LEFT);
+        textSize(12);
+        fill(0);
+        text("Spectators:" + spectators, gridSpace* 3 / 4, gridSpace + 30 + maxPlayers*20);
+    }
+    
     void displayInfo(){//Displays in game lobby info on the bottom left
         textAlign(10);
         textAlign(LEFT);
@@ -245,7 +276,7 @@ private class GameLobby{
         if(command == 'e'){ //End of Game (Only an unstarted game)
             while(lobbyClient.available() > 0)
                 message = receive(); //Takes care of all of the buffer backlog
-            joinError = "Host has left unstarted game";
+            joinError = "Empty for too long";
             setLobbyStatus(); //Go to lobby
         }
         else if(command == 'm'){ //Chat Message -> add to chat list
@@ -289,6 +320,9 @@ private class GameLobby{
         }
         else if(command == 'u'){ //Reset game
             reset();
+        }
+        else if(command == 'o'){ //Reset game
+            spectators = Integer.parseInt(message.substring(1));
         }
     }
 }
