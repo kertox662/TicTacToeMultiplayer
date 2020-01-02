@@ -1,7 +1,6 @@
 package lobby
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -17,6 +16,8 @@ const maxLobbies = 500
 //maxChanBuffer - Max size for a buffer on a channel
 const maxChanBuffer = 50
 
+const maxChatLog = 20
+
 //LobbyChannel - The channel to communicate with to access lobby data
 var LobbyChannel chan chan string
 
@@ -27,12 +28,14 @@ var GameChan chan *GameLobby
 type GameLobby struct {
 	Name                            string
 	NumPlayer, MaxPlayer, CurPlayer int
+	Leader                          int
 	GridSize, Mode, Target          int
 	Grid                            [][]int
 	Started                         bool
 	PlayerNames                     []string
 	CommChan                        chan chan string
 	ReverseChans                    []chan string
+	ended                           bool
 }
 
 //Encode - Turns the GameLobby data into a string
@@ -45,6 +48,20 @@ func (gl *GameLobby) Encode() string {
 func (gl *GameLobby) EncodeMin() string {
 	data := []string{gl.Name, strconv.Itoa(gl.MaxPlayer), strconv.Itoa(gl.Mode), strconv.Itoa(gl.GridSize), strconv.Itoa(gl.Target)}
 	return strings.Join(data, ",")
+}
+
+//NextPlayerTurn - Calculates the next player turn for the game lobby
+func (gl *GameLobby) NextPlayerTurn() bool {
+	initPlayer := gl.CurPlayer
+	noLoop := true
+	for i := gl.CurPlayer; i != initPlayer || noLoop; {
+		i = (i % gl.MaxPlayer) + 1
+		if gl.PlayerNames[i-1] != "" {
+			return true
+		}
+		noLoop = false
+	}
+	return false
 }
 
 //AddPlayer - Adds a connection object and name to matching indices in the GameLobby object if they do not yet exist
@@ -95,9 +112,14 @@ func (gl *GameLobby) RemovePlayerByChan(commChan chan string) {
 	}
 }
 
+//IsEnded - returns if the given GameLobby has ended
+func (gl *GameLobby) IsEnded() bool {
+	return gl.ended
+}
+
 //NewGameLobby - Minimum constructor for a GameLobby Object
 func NewGameLobby(name string, maxPlayer, gridSize, mode, target int) GameLobby {
-	newLobby := GameLobby{name, 0, maxPlayer, 0, gridSize, mode, target, nil, false, nil, nil, nil}
+	newLobby := GameLobby{name, 0, maxPlayer, 0, 1, gridSize, mode, target, nil, false, nil, nil, nil, false}
 
 	emptyGrid := make([][]int, gridSize)
 	for i := 0; i < gridSize; i++ {
@@ -134,6 +156,38 @@ func GetLobby(name string) *GameLobby {
 	return nil
 }
 
+//CheckWinner - Calculates if from the given location there is a winner for a game. If there is, outputs index, otherwise 0.
+func (gl *GameLobby) CheckWinner(i, j int) int {
+	val := gl.Grid[i][j]
+	var dist [3][3]int
+	dist[1][1] = 1
+	for dy := -1; dy <= 1; dy++ {
+		for dx := -1; dx <= 1; dx++ {
+			if dy == 0 && dx == 0 {
+				continue
+			}
+			y := i + dy
+			x := j + dx
+			for y >= 0 && y < gl.GridSize && x >= 0 && x < gl.GridSize && gl.Grid[y][x] == val {
+				dist[dy+1][dx+1]++
+				y += dy
+				x += dx
+			}
+		}
+	}
+	var vert, horz, diag1, diag2 int
+	for r := 0; r < 3; r++ {
+		vert += dist[r][1]
+		horz += dist[1][r]
+		diag1 += dist[r][r]
+		diag2 += dist[r][2-r]
+	}
+	if vert == gl.Target || horz == gl.Target || diag1 == gl.Target || diag2 == gl.Target {
+		return val
+	}
+	return 0
+}
+
 func addNewLobby(gl *GameLobby) int {
 	for i := 0; i < len(lobbies); i++ {
 		if lobbies[i].Name == gl.Name {
@@ -162,6 +216,7 @@ func deleteLobby(lobbyName string) {
 			break
 		}
 		if lobbies[i].Name == lobbyName {
+			lobbies[i].ended = true
 			lobbies = append(lobbies[:i], lobbies[i+1:]...)
 			break
 		}
@@ -170,7 +225,6 @@ func deleteLobby(lobbyName string) {
 
 func getLobbyList() string {
 	list := ""
-	fmt.Println(len(lobbies))
 	for i := 0; i < len(lobbies); i++ {
 		if !lobbies[i].Started {
 			list += lobbies[i].Encode() + "\n"

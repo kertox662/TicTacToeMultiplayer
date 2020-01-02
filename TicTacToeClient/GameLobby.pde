@@ -19,7 +19,9 @@ private class GameLobby{
     boolean selected;
     Button leaveButton;
     int index;
-    String[] chat;
+    StringList chat;
+    int leader;
+    boolean started;
     
     
     GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target){
@@ -34,7 +36,10 @@ private class GameLobby{
         this.leaveButton = makeLeave();
         this.index = -1;
         this.winner = -1;
-        chat = new String[MAX_CHAT_SIZE];
+        chat = new StringList();
+        leader = 1;
+        started = false;
+        players = new String[maxP];
     }
     
     GameLobby(String[] info){
@@ -67,6 +72,8 @@ private class GameLobby{
         displayGrid();
         displayLeave();
         displayChat();
+        displayInfo();
+        displayPlayers();
     }
     
     void displayGrid(){
@@ -102,13 +109,52 @@ private class GameLobby{
     }
     
     void displayChat(){
+        textAlign(LEFT,BOTTOM);
+        textSize(12);
+        int h = 0;
+        for(int i = chat.size()-1; i >= 0; i--){
+            String m = chat.get(i);
+            h += ceil(textWidth(m) / chatBox.w);
+            text(m, gridSpace + 5, height - chatBox.h - h*13 - 5);
+        }
+    }
+    
+    void displayPlayers(){
+        textAlign(CENTER);
+        text("Players",gridSpace/2, gridSpace + 10);
+        textSize(12);
+        for(int i = 0; i < maxPlayers; i++){
+            if(mode == 1){
+                drawName(players[i], symbols[i+1], gridSpace/2, gridSpace + 30 + i*20);
+            } else if(mode == 2){
+                drawName(players[i], colors[i+1], gridSpace/2, gridSpace + 30 + i*20);
+            }
+        }
+    }
+    
+    void displayInfo(){
+        textAlign(10);
+        textAlign(LEFT);
+        text("Lobby: " + this.name, 10, gridSpace + 40);
+        text("Connect: " + this.target, 10, gridSpace + 55);
+        text("Size: " + this.gridSize + "x" + this.gridSize, 10, gridSpace + 70);
+        String currentPlayer;
+        if(!started)
+            currentPlayer = "N/A";
+        else
+            currentPlayer = symbols[playerTurn];
+        text("Current Player: " + currentPlayer, 10, gridSpace + 85);
+        text("Status: " + ((started)?"Playing":"Waiting to begin"), 10, gridSpace + 100 );
     }
     
     void leaveLobby(){
         if(currentGame != this) return;
         lobbyClient.write("l" + lobbyName + '\n');
         currentGame = null;
-        String myLeaveMessage = receive();
+        if(index == 1){
+            String myLeaveMessage = receive();
+            println("Leave Message:", myLeaveMessage);
+        }
         setLobbyStatus();
     }
     
@@ -120,17 +166,76 @@ private class GameLobby{
             if(grid[y][x] != 0) 
                 return;
             grid[y][x] = index;
-            if(checkWinner(y,x)){
-                winner = index;
-                if(mode == 1)
-                    println("Player",winner,"playing", symbols[winner] ,"Wins!");
-                else 
-                    println("Player",winner,"playing", colorNames[winner] ,"Wins!");
-            };
             playerTurn = 0;
         }
     }
     
     void handleServerMessage(String message){
+        println("Received from game:",message);
+        char command = message.charAt(0);
+        if(command == 'e'){ //End of Game
+            while(lobbyClient.available() > 0)
+                message = receive();
+            setLobbyStatus();
+        }
+        else if(command == 'm'){ //Chat Message
+            chat.append(message.substring(1));
+            if(chat.size() > MAX_CHAT_SIZE){
+                chat.remove(0);
+            }
+        }
+        else if(command == 'n'){ //New Leader
+            this.leader = Integer.parseInt(message.substring(1));
+        }
+        else if(command == 'l'){ //Player Leave
+            String playerName = message.substring(1);
+            for(int i = 0; i < maxPlayers; i++){
+                if(playerName.equals(players[i])){
+                    players[i] = "";
+                    break;
+                }
+            }
+        }
+        else if(command == 'p'){ //Player Move
+            String[] move = message.substring(1).split(",");
+            int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]);
+            grid[y][x] = playerTurn;
+        }
+        else if(command == 'w'){ //Winner Declared
+            winner = Integer.parseInt(message.substring(1));
+        }
+        else if(command == 'j'){ //Player Join
+            String[] info = message.substring(1).split(",");
+            String playerName = info[0];
+            int index = Integer.parseInt(info[1]);
+            players[index] = playerName;
+        }
+        else if(command == 't'){ //Player Turn
+            playerTurn = Integer.parseInt(message.substring(1));
+        }
+        else if(command == 's'){ //Start of Game
+            started = true;
+        }
     }
+}
+
+void drawName(String name, color c, int x, int y){
+    stroke(0);
+    fill(c);
+    rectMode(CENTER);
+    textSize(12);
+    textAlign(LEFT);
+    rect(x,y,12,12);
+    if(name != null)
+        text(name, x + 10, y);
+}
+void drawName(String name, String c, int x, int y){
+    textSize(12);
+    textAlign(CENTER);
+    String nameText;
+    if(name == null)
+        nameText = c + ":";
+    else 
+        nameText = c + ":" + name;
+    text(nameText, x, y);
 }

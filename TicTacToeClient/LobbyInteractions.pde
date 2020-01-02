@@ -79,6 +79,7 @@ void hostLobby(){
     while(lobbyClient.available() == 0){
     }
     String success = lobbyClient.readString();
+    println(success);
     if(success.equals("1")){
         hostError = "Lobby name matches existing lobby";
         return;
@@ -86,6 +87,7 @@ void hostLobby(){
     joinLobby(boxes[2].text);
     for(int i = 2; i < 7; i++){
         boxes[i].text = "";
+        boxes[i].curIndex = 0;
     }
 }
 
@@ -99,6 +101,7 @@ void joinLobby(String name){
         }
         int index = Integer.parseInt(String.valueOf(lobbyClient.readChar()));
         receiveLobbies();
+        //refreshLobbies();
         for(GameLobby l : lobbies){
             if(name.equals(l.name)){
                 currentGame = l;
@@ -108,5 +111,11 @@ void joinLobby(String name){
         currentGame.index = index;
         setInGameStatus();
         
+    }
+    else if(c == '1'){
+    }
+    else if(c == '2'){
+    }
+    else if(c == '3'){
     }
 }

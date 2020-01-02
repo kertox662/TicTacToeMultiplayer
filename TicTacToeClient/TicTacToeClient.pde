@@ -3,12 +3,15 @@ import processing.net.*;
 final int MAX_PLAYERS = 4;
 final int MAX_GRID = 32;
 int gridSpace = 520;
+//int gridSpace = 620;
 
 final String[] symbols = {"","X","O","\u25b2", "\u25C6"};
 final color[] colors = {color(255),color(231, 76, 60), color(52, 152, 219), color(46, 204, 113), color(247, 220, 111)};
 final String[] colorNames = {"", "Red", "Blue", "Green", "Yellow"};
 
-int gridSize = 32, offset = 40, cellSize;
+int gridSize = 32, cellSize;
+int offset = 40;
+//int offset = 0;
 int target = 4;
 int[][] grid;
 
@@ -71,6 +74,9 @@ void draw(){
         drawUserName();
         //println(hostButton.isHovered());
     } else if(inGameLobby){
+        while(lobbyClient.available() > 0 && inGameLobby){
+            currentGame.handleServerMessage(receive());
+        }
         currentGame.display();
         chatBox.display();
     }
@@ -135,9 +141,6 @@ void mouseClicked(){
         }
     }
     if(inGameLobby){
-        if(lobbyClient.available() > 0){
-            currentGame.handleServerMessage(receive());
-        }
         currentGame.handleGridClick();
         currentGame.leaveButton.handleClick();
         if(currentGame.leaveButton.framesClicked > 0){
@@ -163,6 +166,11 @@ void keyPressed(){
                     setLobbyStatus();
                     refreshLobbies();
                 }
+            } else if(selectedBox == chatBox && chatBox.text.length() > 0){
+                println("Trying to send");
+                lobbyClient.write("m" + lobbyName + ":" + chatBox.text);
+                chatBox.text = "";
+                println("HERE");
             }
             break;
             
