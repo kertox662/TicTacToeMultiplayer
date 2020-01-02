@@ -95,6 +95,11 @@ void hostLobby(){
     //println(success);
     if(success.equals("1")){ //If Lobby name already exists
         hostError = "Lobby name matches existing lobby";
+        lock.popFront();
+        return;
+    } else if(success.equals("2")){
+        hostError = "Error in getting lobby name.\nThis may be due to using a comma.";
+        lock.popFront();
         return;
     }
     lock.popFront();
