@@ -183,7 +183,7 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 	if vert >= gl.Target || horz >= gl.Target || diag1 >= gl.Target || diag2 >= gl.Target {
 		return val
 	}
-	return gl.checkTie()
+	return 0
 }
 
 func (gl *GameLobby) checkTie() int {

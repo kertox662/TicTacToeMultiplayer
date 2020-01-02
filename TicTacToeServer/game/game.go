@@ -22,6 +22,9 @@ func HandleGame(game *lobby.GameLobby) {
 	for i := 0; i < game.GridSize; i++ {
 		game.Grid[i] = make([]int, game.GridSize)
 	}
+
+	numPlaced := 0
+
 	lastEmptyCheck := time.Now()
 	for {
 		//Do Gamey Stuff
@@ -97,16 +100,18 @@ func HandleGame(game *lobby.GameLobby) {
 					break
 				}
 				game.Grid[r][c] = index
+				numPlaced++
 				broadcast(game, "p"+move)
 				logging.Log(fmt.Sprintf("%s:::Move by %d to %d,%d", game.Name, index, r, c))
+				hasMultPlayers := game.NextPlayerTurn()
 				winnerInd := game.CheckWinner(r, c)
 				if winnerInd > 0 {
 					broadcast(game, "w"+strconv.Itoa(winnerInd))
 					break
-				}
-				hasMultPlayers := game.NextPlayerTurn()
-				if !hasMultPlayers {
+				} else if !hasMultPlayers {
 					broadcast(game, "w"+strconv.Itoa(game.CurPlayer))
+				} else if numPlaced >= game.GridSize*game.GridSize {
+					broadcast(game, "w"+strconv.Itoa(game.MaxPlayer+1))
 				} else {
 					broadcast(game, "t"+strconv.Itoa(game.CurPlayer))
 				}
