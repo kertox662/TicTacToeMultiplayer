@@ -141,8 +141,9 @@ private class GameLobby{
                 }
                 else if(mode == 2){//Color Mode
                     noStroke();
+                    rectMode(CORNER);
                     fill(colors[this.grid[i][j]]);
-                    rect(j*cellSize + cellSize/2 + offset/2, i*cellSize + cellSize/2 + offset/2, cellSize, cellSize);
+                    rect(j*cellSize + offset/2, i*cellSize + offset/2, cellSize, cellSize);
                 }
             }
         }
