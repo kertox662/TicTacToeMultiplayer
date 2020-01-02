@@ -1,4 +1,4 @@
-void setLobbyStatus(){
+void setLobbyStatus(){ //Sets variables for lobby mode
     //Lobby Stuff
     inLobby = true;
     pixelsUp = 0;
@@ -16,7 +16,7 @@ void setLobbyStatus(){
     refreshLobbies();
 }
 
-void setInGameStatus(){
+void setInGameStatus(){ //Sets variables for gaming mode
     //Lobby Stuff
     inLobby = false;
     refresh.active = false;

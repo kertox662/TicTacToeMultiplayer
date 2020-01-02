@@ -1,4 +1,4 @@
-void refreshLobbies(){
+void refreshLobbies(){ //Requests a refresh
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -9,15 +9,15 @@ void refreshLobbies(){
     lock.popFront();
 }
 
-void receiveLobbies(){
-    selectedLobby = null;
-    lobbies.clear();
-    String current = receive();
+void receiveLobbies(){ //Reads in lobbies from a refresh
+    selectedLobby = null; //Reset selected
+    lobbies.clear(); //Reset all lobbies
+    String current = receive(); //Receive data, and until there's none left, add it to the list
     while(current != ""){
         lobbies.add(new GameLobby(current.split(",")));
         current = receive();
     }
-    current = receive();
+    current = receive(); //For getting number of people online
     if(!current.equals(""))
         numPlayersOnline = Integer.parseInt(current);
     else
@@ -25,8 +25,8 @@ void receiveLobbies(){
 }
 
 void hostLobby(){
-    hostError = "";
-    ArrayList<String> data = new ArrayList<String>();
+    hostError = ""; //Reset Host error
+    StringList data = new StringList(); //Buffer for data in host boxes
     for(int i = 2; i < 7; i++){
         String dataPiece = boxes[i].text;
         if(dataPiece.equals("")){
@@ -42,7 +42,7 @@ void hostLobby(){
                 return;
             }
         }
-        switch(i){
+        switch(i){ //Checks validity
             case 3:
                 int mPlayer = Integer.parseInt(dataPiece);
                 if(mPlayer < 2){
@@ -79,13 +79,10 @@ void hostLobby(){
                 }
                 break;
         }
-        data.add(dataPiece);
+        data.append(dataPiece);
     }
-    String r = "";
-    for(int i = 0; i < data.size(); i++){
-        r += data.get(i);
-        if(i < data.size()-1) r += ',';
-    }
+    //IF IT'S HERE, THE BOXES WERE VALID
+    String r = join(data.array(),","); //Joins the data together into one string
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -94,38 +91,38 @@ void hostLobby(){
     lobbyClient.write('n' + r + '\n');
     while(lobbyClient.available() == 0){
     }
-    String success = lobbyClient.readString();
+    String success = lobbyClient.readString(); //Gets success code of hosting a lobby
     println(success);
-    if(success.equals("1")){
+    if(success.equals("1")){ //If Lobby name already exists
         hostError = "Lobby name matches existing lobby";
         return;
     }
     lock.popFront();
-    refreshLobbies();
-    joinLobby(boxes[2].text);
-    for(int i = 2; i < 7; i++){
+    refreshLobbies(); //If valid, refresh
+    joinLobby(boxes[2].text); //Join the new lobby
+    for(int i = 2; i < 7; i++){ //update the TextBoxes
         boxes[i].text = "";
         boxes[i].curIndex = 0;
     }
 }
 
-void joinLobby(String name){
+void joinLobby(String name){ //Joins to the lobby with specified name
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
         //Pass
     }
-    lobbyClient.write("j"+name+'\n');
+    lobbyClient.write("j"+name+'\n'); //Requests joining
     while(lobbyClient.available() == 0){
     }
-    char c = lobbyClient.readChar();
+    char c = lobbyClient.readChar(); //Success Code 
     joinError = "";
-    if(c == '0'){
+    if(c == '0'){ //If success
         while(lobbyClient.available() == 0){
         }
-        int index = Integer.parseInt(String.valueOf(lobbyClient.readChar()));
-        receiveLobbies();
-        for(GameLobby l : lobbies){
+        int index = Integer.parseInt(String.valueOf(lobbyClient.readChar())); //Wait for your new index!
+        receiveLobbies(); //Update lobby data
+        for(GameLobby l : lobbies){ //Find the lobby that you just joined and set it as the current
             if(name.equals(l.name)){
                 currentGame = l;
                 l.index = index;
@@ -133,10 +130,11 @@ void joinLobby(String name){
             }
         }
         lock.popFront();
-        setInGameStatus();
+        setInGameStatus(); //Sets variable for in game mode
         return;
     }
     lock.popFront();
+    //Different errors that could happen
     if(c == '1'){
         joinError = "Lobby is full";
     }
@@ -149,7 +147,7 @@ void joinLobby(String name){
     refreshLobbies();
 }
 
-void sendStart(){
+void sendStart(){ //Sends the start message to server
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -159,7 +157,7 @@ void sendStart(){
     lock.popFront();
 }
 
-void sendMessage(){
+void sendMessage(){ //Sends chat message
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -169,7 +167,7 @@ void sendMessage(){
     lock.popFront();
 }
 
-void sendMove(int y, int x, int index){
+void sendMove(int y, int x, int index){ //Sends a move the you make
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -179,7 +177,7 @@ void sendMove(int y, int x, int index){
     lock.popFront();
 }
 
-void sendLeave(){
+void sendLeave(){ //Sends the fact that you're leaving
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){
@@ -189,7 +187,7 @@ void sendLeave(){
     lock.popFront();
 }
 
-void sendReset(){
+void sendReset(){ //Host sends a reset call
     long timeStamp = System.nanoTime();
     lock.addAccess(timeStamp);
     while(lock.peekFront() != timeStamp){

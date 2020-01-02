@@ -1,6 +1,10 @@
-final int clickedFrames = 5;
+final int clickedFrames = 5; //What to set the value of frameClicked to. Essentially how quick does the button flash when pressed
 
 Button refresh, joinLobby, hostButton;
+
+/////////////////
+//Button Makers//
+/////////////////
 
 void makeRefresh(){
     int w = 120, h = 15;
@@ -36,6 +40,10 @@ Button makeReset(){
     return resetButton;
 }
 
+/////////////////
+///Makers Done///
+/////////////////
+
 private class Button{
     int x,y,w,h;
     String text;
@@ -55,7 +63,7 @@ private class Button{
     void display(){
         noFill();
         stroke(0);
-        if(framesClicked > 0){
+        if(framesClicked > 0){ //If clicked, use different fill and reduce the frames left clicked
             fill(52, 152, 219);
             framesClicked--;
         }
@@ -70,12 +78,12 @@ private class Button{
         text(this.text, x + w/2,y + h/2 - 2);
     }
     
-    boolean isHovered(){
+    boolean isHovered(){ //Point in rectangle detection for mouse coords
         if(mouseX >= x && mouseX <= x+w && mouseY >= y && mouseY <= y+h) return true;
         return false;
     }
     
-    void handleClick(){
+    void handleClick(){ //Checks hovered if so, sets framesClicked
         if(!active) {
             framesClicked = 0;
             return;

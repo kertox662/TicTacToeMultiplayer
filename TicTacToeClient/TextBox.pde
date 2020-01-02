@@ -1,9 +1,9 @@
-final int cursorBlinkSpeed = 45;
+final int cursorBlinkSpeed = 45; //How quick the cursor blinks
 TextBox selectedBox = null;
 
-TextBox[] boxes = {null,null,null,null,null,null,null};
+TextBox[] boxes = {null,null,null,null,null,null,null}; //Storage of textboxes for looping through them
 
-void makeNameBox(){
+void makeNameBox(){ //Makes the name box
     int boxW = 150, boxH = 15;
     nameBox = new TextBox(width/2 - boxW/2, height/2 - boxH/2, boxW, boxH,35);
     nameBox.active = true;
@@ -11,7 +11,7 @@ void makeNameBox(){
     boxes[0] = nameBox;
 }
 
-void makeChatBox(){
+void makeChatBox(){ //Makes the chat box
     //int boxW = 150, boxH = 12;
     int boxW = width - gridSpace - 10, boxH = 12;
     //chatBox = new TextBox(width - boxW - 5, height - boxH - 5, boxW, boxH);
@@ -23,7 +23,7 @@ void makeChatBox(){
 }
 
 
-void makeHostBoxes(){
+void makeHostBoxes(){ //Makes the hosting boxes
     int boxW = 150, boxH = 15;
     int middle = gridSpace + (width-gridSpace)/2 - boxW/2;
     for(int i = 0; i < 5; i++){
@@ -36,14 +36,14 @@ void makeHostBoxes(){
     boxes[6].limit = 2;
 }
 
-private class TextBox{
+private class TextBox{ //Holds text which can be added to or subtracted from
     String text;
     int x,y,w,h;
     
     boolean isSelected, active;
     int curIndex = 0;
-    int limit;
-    boolean extendUp = false;
+    int limit; //How many characters the text box can hold
+    boolean extendUp = false; //can this text box be extended up for more space?
     
     TextBox(int x,int y,int w,int h){
         this.x = x;
@@ -52,10 +52,10 @@ private class TextBox{
         this.h = h;
         this.text = "";
         active = false;
-        limit = w/h * 2;
+        limit = w/h * 2; //Default limit
     }
     
-    TextBox(int x,int y,int w,int h, int lim){
+    TextBox(int x,int y,int w,int h, int lim){ //initialize with limit
         this.x = x;
         this.y = y;
         this.w = w;
@@ -65,17 +65,17 @@ private class TextBox{
         limit = lim;
     }
     
-    void display(){
+    void display(){ //Displays the rectangle, text, and cursor
         ArrayList<String> lines = new ArrayList<String>();
         stroke(0);
         noFill();
         textSize(h-1);
         rectMode(CORNER);
         textAlign(LEFT);
-        if(extendUp){
-           try{
+        if(extendUp){ //If extending is possible
+           try{ //Without this, editing the string may cause problems
                 String line = "";
-                for(int i = 0; i < text.length(); i++){
+                for(int i = 0; i < text.length(); i++){ //Get all of the lines for the textbox
                     if(textWidth(line + text.charAt(i)) < w){
                         line += text.charAt(i);
                     }else{
@@ -84,14 +84,14 @@ private class TextBox{
                     }
                 }
                 if(!line.equals("")) lines.add(line);
-                rect(x,y-h*(max(lines.size()-1,0)), w, (max(lines.size(),1))*h);
+                rect(x,y-h*(max(lines.size()-1,0)), w, (max(lines.size(),1))*h);//Draws the textbox rectangle with extended height
                 fill(0);
-                for(int i = 0; i < lines.size(); i++){
+                for(int i = 0; i < lines.size(); i++){ //Draws the text at certain heights within the rectangle
                     String l = lines.get(i);
                     text(l, x+2, y+h*4/5 - h*(lines.size()-i-1));
                 }
-                //for(String s : lines) println(s);
-                if(isSelected && frameCount%cursorBlinkSpeed < cursorBlinkSpeed/2){
+                
+                if(isSelected && frameCount%cursorBlinkSpeed < cursorBlinkSpeed/2){ //If the box is selected, draw the cursor (a line)
                     int cursInd = 0, totalIndex = 0;
                     while(cursInd < lines.size() && curIndex > totalIndex + lines.get(cursInd).length()){
                         totalIndex += lines.get(cursInd).length();
@@ -103,7 +103,7 @@ private class TextBox{
             }catch(StringIndexOutOfBoundsException e){
             }
         }
-        else{
+        else{ //Same idea as above, but with single string
             rect(x,y,w,h);
             fill(0);
             text(this.text, x + 2, y + h*4/5);
@@ -115,26 +115,26 @@ private class TextBox{
         
     }
     
-    void addChar(char c){
+    void addChar(char c){ //Adds character if it wouldn't go over limit
         if(text.length() == limit) return;
         text = text.substring(0,curIndex) + c + text.substring(curIndex);
         curIndex++;
     }
     
-    void deleteChar(){
+    void deleteChar(){ //Deletes the character behind the cursor if any exist
         if(curIndex > 0){
             text = text.substring(0,curIndex-1) + text.substring(curIndex);
             curIndex--;
         }
     }
-    String getText(){
+    String getText(){ //Returns string and resets textbox
         String t = this.text;
         this.text = "";
         this.curIndex = 0;
         return t;
     }
     
-    boolean isClicked(int x, int y){
+    boolean isClicked(int x, int y){ //Returns if a point is in the textBox
         if(x >= this.x && x <= this.x + this.w && y >= this.y && y <= this.y+this.h) return true;
         return false;
     }

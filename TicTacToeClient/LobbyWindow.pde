@@ -5,7 +5,7 @@ int pixelsUp = 0;
 
 int numPlayersOnline = 0;
 
-void drawNameBox(){
+void drawNameBox(){ //Draws the name box and labels
     textSize(16);
     textAlign(CENTER);
     text(serverError, width/2, height - 50);
@@ -14,7 +14,7 @@ void drawNameBox(){
     nameBox.display();
 }
 
-void drawHostBoxes(){
+void drawHostBoxes(){ //Draws all of the hosting textBoxes and respective labels
     fill(0);
     textSize(24);
     textAlign(CENTER);
@@ -28,7 +28,7 @@ void drawHostBoxes(){
     }
 }
 
-void drawHostError(){
+void drawHostError(){ //Draws the host error if it exists
     fill(220, 20,20);
     stroke(220, 20,20);
     textSize(12);
@@ -39,13 +39,13 @@ void drawHostError(){
     }
 }
 
-void drawLobbyButtons(){
+void drawLobbyButtons(){ //Draws all of the lobby buttons
     refresh.display();
     joinLobby.display();
     hostButton.display();
 }
 
-void drawUserName(){
+void drawUserName(){ //Draws the client's username in the bottom right
     String s = "Logged in as " + lobbyName;
     fill(0);
     textSize(16);
@@ -53,7 +53,7 @@ void drawUserName(){
     text(s, width - 6, height - 6);
 }
 
-void drawJoinError(){
+void drawJoinError(){ //Draws the join error if it exists
     fill(220, 20,20);
     stroke(220, 20,20);
     textSize(12);
@@ -64,7 +64,7 @@ void drawJoinError(){
     }
 }
 
-void drawAmountOnline(){
+void drawAmountOnline(){ //Draws how many players were online the last time you refreshed
     fill(0);
     textAlign(RIGHT);
     textSize(16);
