@@ -180,7 +180,7 @@ func (gl *GameLobby) CheckWinner(i, j int) int {
 		diag1 += dist[r][r]
 		diag2 += dist[r][2-r]
 	}
-	if vert == gl.Target || horz == gl.Target || diag1 == gl.Target || diag2 == gl.Target {
+	if vert >= gl.Target || horz >= gl.Target || diag1 >= gl.Target || diag2 >= gl.Target {
 		return val
 	}
 	return 0

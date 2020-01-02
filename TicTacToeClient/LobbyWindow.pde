@@ -3,6 +3,8 @@ String serverError = "", hostError = "";
 
 int pixelsUp = 0;
 
+int numPlayersOnline = 0;
+
 void drawNameBox(){
     textSize(16);
     textAlign(CENTER);
@@ -49,4 +51,14 @@ void drawUserName(){
     textSize(16);
     textAlign(RIGHT);
     text(s, width - 6, height - 6);
+}
+
+void drawJoinError(){
+}
+
+void drawAmountOnline(){
+    fill(0);
+    textAlign(RIGHT);
+    textSize(16);
+    text(Integer.toString(numPlayersOnline) + " Players Online", width-6,height-20);
 }

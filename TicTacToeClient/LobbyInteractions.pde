@@ -11,6 +11,11 @@ void receiveLobbies(){
         lobbies.add(new GameLobby(current.split(",")));
         current = receive();
     }
+    current = receive();
+    if(!current.equals(""))
+        numPlayersOnline = Integer.parseInt(current);
+    else
+        numPlayersOnline = Integer.parseInt(receive());
 }
 
 void hostLobby(){

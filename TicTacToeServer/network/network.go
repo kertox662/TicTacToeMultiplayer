@@ -113,7 +113,10 @@ func handleLobbyRequests(c net.Conn, command rune, message string) {
 		lobby.LobbyChannel <- lobbyChan
 		lobbyChan <- "r"
 		lobbyList := <-lobbyChan
-		c.Write([]byte(lobbyList))
+		naming.NameChannel <- lobbyChan
+		lobbyChan <- "l"
+		numOnline := <-lobbyChan
+		c.Write([]byte(lobbyList + numOnline + "\n"))
 		break
 	case 'n':
 		lobby.LobbyChannel <- lobbyChan

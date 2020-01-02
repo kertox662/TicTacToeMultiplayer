@@ -84,6 +84,7 @@ func HandleGame(game *lobby.GameLobby) {
 						broadcast(game, "t"+strconv.Itoa(game.CurPlayer))
 					}
 					logging.Log(game.Name + ":::Has Started Playing")
+					broadcast(game, "mStarting the Game")
 				}
 				break
 			case 'p': //Play Move

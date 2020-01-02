@@ -70,7 +70,10 @@ private class Button{
     }
     
     void handleClick(){
-        if(!active) return;
+        if(!active) {
+            framesClicked = 0;
+            return;
+        }
         if(isHovered()){
             framesClicked = clickedFrames;
             actionTaken = false;

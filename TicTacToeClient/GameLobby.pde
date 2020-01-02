@@ -122,8 +122,8 @@ private class GameLobby{
         
         stroke(0);
         for(int i = 0; i <= gridSize; i++){
-          line(cellSize * i + offset/2, offset/2, cellSize* i + offset/2, gridSpace-offset/2);
-          line(offset/2, cellSize * i + offset/2, gridSpace-offset/2, cellSize * i + offset/2);
+          line(cellSize * i + offset/2, offset/2, cellSize* i + offset/2, cellSize*gridSize + offset/2);
+          line(offset/2, cellSize * i + offset/2, cellSize*gridSize + offset/2, cellSize * i + offset/2);
         }
     }
     
@@ -192,7 +192,7 @@ private class GameLobby{
         textAlign(CENTER);
         textSize(18);
         fill(0);
-        text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 25);
+        text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 10);
     }
     
     void leaveLobby(){
@@ -251,7 +251,7 @@ private class GameLobby{
         else if(command == 'p'){ //Player Move
             String[] move = message.substring(1).split(",");
             int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]), ind = Integer.parseInt(move[2]);
-            println(y,x,"is now",ind);
+            //println(y,x,"is now",ind);
             grid[y][x] = ind;
         }
         else if(command == 'w'){ //Winner Declared

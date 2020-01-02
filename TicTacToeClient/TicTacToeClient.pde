@@ -1,7 +1,7 @@
 import processing.net.*;
 
-final String IP = "kiki.cubetex.net";
-//final String IP = "127.0.0.1";
+//final String IP = "kiki.cubetex.net";
+final String IP = "127.0.0.1";
 final int PORT = 42069;
 
 final int MAX_PLAYERS = 4;
@@ -65,6 +65,7 @@ void draw(){
         drawHostError();
         drawLobbyButtons();
         drawUserName();
+        drawAmountOnline();
     } else if(inGameLobby){
         while(lobbyClient.available() > 0 && inGameLobby){
             currentGame.handleServerMessage(receive());
@@ -99,6 +100,10 @@ void mouseClicked(){
         if(boxes[i].isClicked(mouseX,mouseY)){
             selectedBox = boxes[i];
             selectedBox.isSelected = true;
+            if(2<=i && i <=6 && selectedLobby != null){
+                selectedLobby.selected = false;
+                selectedLobby = null;
+            }
         }
     }
     
@@ -141,9 +146,7 @@ void mouseClicked(){
             }
             currentGame.startButton.handleClick();
             if(currentGame.startButton.framesClicked > 0){
-                println("HERE");
                 lobbyClient.write("s"+lobbyName+"\n");
-                println("HERE2");
             }
         } catch(NullPointerException e){
         }
@@ -169,12 +172,25 @@ void keyPressed(){
                 }
             } else if(selectedBox == chatBox && chatBox.text.length() > 0){
                 lobbyClient.write("m" + lobbyName + ":" + chatBox.getText() + "\n");
+            } else if(selectedLobby != null && inLobby){
+                joinLobby(selectedLobby.name);
+            }else if(inLobby){
+                for(int i = 2; i <= 6; i++){
+                    if(selectedBox == boxes[i]){
+                        hostLobby();
+                        break;
+                    }
+                }
             }
             break;
             
         default:
             if(key != CODED && selectedBox != null){
                 selectedBox.addChar(key);
+            }else{
+                if(key == 'r' && inLobby){
+                    refreshLobbies();
+                }
             }
             break;
         }

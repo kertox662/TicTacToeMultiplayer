@@ -40,7 +40,6 @@ func deleteName(name string) {
 
 //HandleNames - The handler responsible for interacting with the name data.
 func HandleNames() {
-	i := 0
 	for {
 		commandChannel := <-NameChannel
 		command := <-commandChannel
@@ -50,8 +49,9 @@ func HandleNames() {
 			addName(command[1:])
 		} else if command[0] == 'd' {
 			deleteName(command[1:])
+		} else if command[0] == 'l' {
+			commandChannel <- strconv.Itoa(len(clientNames))
 		}
-		i++
 	}
 }
 
