@@ -7,5 +7,5 @@ buildLinux:tictactoeServer.go
 buildMac:tictactoeServer.go
 	env GOOS="darwin" go build -o tictactoeBin tictactoeServer.go
 
-toremote:tictactoeBin
+toremote:buildLinux
 	scp ./tictactoeBin kiki:~/TicTacToeServer
