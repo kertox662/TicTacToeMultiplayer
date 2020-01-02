@@ -24,6 +24,12 @@ Button makeLeave(){
     return leaveButton;
 }
 
+Button makeStart(){
+    int w = 120, h = 15;
+    Button startButton = new Button(140, gridSpace + 10, w, h, "Start Game");
+    return startButton;
+}
+
 private class Button{
     int x,y,w,h;
     String text;

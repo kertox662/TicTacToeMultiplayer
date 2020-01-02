@@ -34,7 +34,7 @@ func main() {
 
 	lobbyChan := make(chan string)
 	for i := 1; i < 5; i++ {
-		gl := lobby.NewGameLobby("Lobby"+strconv.Itoa(i), i, i*i, i%2+1, i)
+		gl := lobby.NewGameLobby("Lobby"+strconv.Itoa(i), i, i*i+6, i%2+1, i+2)
 		lobby.LobbyChannel <- lobbyChan
 		lobbyChan <- "n" + gl.EncodeMin()
 		s := <-lobbyChan

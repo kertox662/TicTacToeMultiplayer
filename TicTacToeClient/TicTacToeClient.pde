@@ -1,5 +1,9 @@
 import processing.net.*;
 
+//final String IP = "kiki.cubetex.net";
+final String IP = "127.0.0.1";
+final int PORT = 42069;
+
 final int MAX_PLAYERS = 4;
 final int MAX_GRID = 32;
 int gridSpace = 520;
@@ -9,11 +13,11 @@ final String[] symbols = {"","X","O","\u25b2", "\u25C6"};
 final color[] colors = {color(255),color(231, 76, 60), color(52, 152, 219), color(46, 204, 113), color(247, 220, 111)};
 final String[] colorNames = {"", "Red", "Blue", "Green", "Yellow"};
 
-int gridSize = 32, cellSize;
+int gridSize = 32;
 int offset = 40;
 //int offset = 0;
 int target = 4;
-int[][] grid;
+//int[][] grid;
 
 int playerTurn = 1, numPlayers = 2;
 int mode = 1; //1 = Character, 2 = Color
@@ -33,8 +37,8 @@ void setup(){
     frameRate(60);
     
     //Grid Setup
-    grid = new int[gridSize][gridSize];
-    cellSize = (gridSpace-offset) / gridSize;
+    //grid = new int[gridSize][gridSize];
+    //cellSize = (gridSpace-offset) / gridSize;
     
     makeNameBox();
     makeChatBox();
@@ -47,17 +51,6 @@ void setup(){
     nameBox.isSelected = true;
     
     lobbies = new ArrayList<GameLobby>();
-    
-    //Connect To Server
-    //lobbyClient = connectMain();
-    //if(lobbyClient == null){
-    //    println("Could not Connect, Connection Timed Out");
-    //    exit();
-    //}
-    //else{
-    //    println(lobbyClient.ip(), lobbyClient.toString());
-        
-    //}
 }
 
 void draw(){
@@ -72,7 +65,6 @@ void draw(){
         drawHostError();
         drawLobbyButtons();
         drawUserName();
-        //println(hostButton.isHovered());
     } else if(inGameLobby){
         while(lobbyClient.available() > 0 && inGameLobby){
             currentGame.handleServerMessage(receive());
@@ -141,10 +133,19 @@ void mouseClicked(){
         }
     }
     if(inGameLobby){
-        currentGame.handleGridClick();
-        currentGame.leaveButton.handleClick();
-        if(currentGame.leaveButton.framesClicked > 0){
-            currentGame.leaveLobby();
+        try{
+            currentGame.handleGridClick();
+            currentGame.leaveButton.handleClick();
+            if(currentGame.leaveButton.framesClicked > 0){
+                currentGame.leaveLobby();
+            }
+            currentGame.startButton.handleClick();
+            if(currentGame.startButton.framesClicked > 0){
+                println("HERE");
+                lobbyClient.write("s"+lobbyName+"\n");
+                println("HERE2");
+            }
+        } catch(NullPointerException e){
         }
     }
 }
@@ -167,10 +168,7 @@ void keyPressed(){
                     refreshLobbies();
                 }
             } else if(selectedBox == chatBox && chatBox.text.length() > 0){
-                println("Trying to send");
-                lobbyClient.write("m" + lobbyName + ":" + chatBox.text);
-                chatBox.text = "";
-                println("HERE");
+                lobbyClient.write("m" + lobbyName + ":" + chatBox.getText() + "\n");
             }
             break;
             
@@ -206,33 +204,4 @@ void mouseWheel(MouseEvent e){
         pixelsUp += e.getCount();
         pixelsUp = max(min(pixelsUp, lobbies.size()*LOBBY_HEIGHT - gridSpace),0);
     }
-}
-
-boolean checkWinner(int i, int j){
-    int val = grid[i][j];
-    int[][] dist = new int[3][3];
-    dist[1][1] = 1;
-    for(int dy = -1; dy <= 1; dy++){
-        for(int dx = -1; dx <= 1; dx++){
-            if(dy == 0 && dx == 0) continue;
-            int y = i + dy, x = j + dx;
-            while(y >= 0 && y < gridSize && x >= 0 && x < gridSize && grid[y][x] == val){
-                dist[dy+1][dx+1]++;
-                y += dy;
-                x += dx;
-            }
-        }
-    }
-    
-    int vert = 0, horz = 0, diag1 = 0, diag2 = 0;
-    for(int r = 0; r < 3; r++){
-        vert += dist[r][1];
-        horz += dist[1][r];
-        diag1 += dist[r][r];
-        diag2 += dist[r][2-r];
-    }
-    
-    if(vert == target || horz == target || diag1 == target || diag2 == target) return true;
-    return false;
-    
 }

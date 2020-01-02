@@ -1,5 +1,5 @@
 final int LOBBY_HEIGHT = 30;
-final int MAX_CHAT_SIZE = 20;
+final int MAX_CHAT_SIZE = 40;
 
 boolean inGameLobby = false;
 TextBox chatBox = null;
@@ -17,11 +17,12 @@ private class GameLobby{
     int[][] grid;
     String[] players;
     boolean selected;
-    Button leaveButton;
+    Button leaveButton, startButton;
     int index;
     StringList chat;
     int leader;
     boolean started;
+    int cellSize;
     
     
     GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target){
@@ -35,11 +36,13 @@ private class GameLobby{
         this.target = target;
         this.leaveButton = makeLeave();
         this.index = -1;
-        this.winner = -1;
+        this.winner = 0;
         chat = new StringList();
         leader = 1;
         started = false;
         players = new String[maxP];
+        startButton = makeStart();
+        cellSize = (gridSpace-offset) / gridSize;
     }
     
     GameLobby(String[] info){
@@ -71,9 +74,19 @@ private class GameLobby{
     void display(){
         displayGrid();
         displayLeave();
+        if(index == this.leader && !started){
+            this.startButton.active = true;
+        }
+        else{
+            this.startButton.active = false;
+        }
+        displayStart();
         displayChat();
         displayInfo();
         displayPlayers();
+        if(winner > 0){
+            displayWinner();
+        }
     }
     
     void displayGrid(){
@@ -82,16 +95,26 @@ private class GameLobby{
         //Format Setup
         textSize(cellSize);
         textAlign(CENTER,CENTER);
+        //textAlign(CENTER);
         rectMode(CENTER);
+        
+        //for(int[] a : grid){
+        //    for(int i : a){
+        //        print(i," ");
+        //     }
+        //     print('\n');
+        //}
+        //println();
         
         for(int i = 0; i < gridSize; i++){
             for(int j = 0; j < gridSize; j++){
+                //println(i,j,grid[i][j]);
                 if(mode == 1){
-                    text(symbols[grid[i][j]], j*cellSize + cellSize/2 + offset/2, i*cellSize + cellSize*4/10 + offset/2);
+                    text(symbols[this.grid[i][j]], j*cellSize + cellSize/2 + offset/2, i*cellSize + cellSize*4/10 + offset/2);
                 }
                 else if(mode == 2){
                     noStroke();
-                    fill(colors[grid[i][j]]);
+                    fill(colors[this.grid[i][j]]);
                     rect(j*cellSize + cellSize/2 + offset/2, i*cellSize + cellSize/2 + offset/2, cellSize, cellSize);
                 }
             }
@@ -99,35 +122,53 @@ private class GameLobby{
         
         stroke(0);
         for(int i = 0; i <= gridSize; i++){
-          line((gridSpace-offset) * i / gridSize + offset/2, offset/2, (gridSpace-offset) * i / gridSize + offset/2, gridSpace-offset/2);
-          line(offset/2, (gridSpace-offset) * i / gridSize + offset/2, gridSpace-offset/2, (gridSpace-offset) * i / gridSize + offset/2);
+          line(cellSize * i + offset/2, offset/2, cellSize* i + offset/2, gridSpace-offset/2);
+          line(offset/2, cellSize * i + offset/2, gridSpace-offset/2, cellSize * i + offset/2);
         }
     }
     
     void displayLeave(){
         leaveButton.display();
     }
+    void displayStart(){
+        if(startButton.active){
+            startButton.display();
+        }
+    }
     
     void displayChat(){
-        textAlign(LEFT,BOTTOM);
+        textAlign(LEFT);
+        rectMode(CORNER);
         textSize(12);
         int h = 0;
         for(int i = chat.size()-1; i >= 0; i--){
             String m = chat.get(i);
-            h += ceil(textWidth(m) / chatBox.w);
-            text(m, gridSpace + 5, height - chatBox.h - h*13 - 5);
+            int c = 0;
+            StringList lines = new StringList();
+            while(c < m.length()-1){
+                String cur = "";
+                for(; c < m.length() && textWidth(cur+m.charAt(c)) < chatBox.w; c++){
+                    cur += m.charAt(c);
+                }
+                lines.append(cur);
+            }
+            for(int s = lines.size()-1; s >= 0; s--){
+                h++;
+                text(lines.get(s), gridSpace + 5, height - chatBox.h - h*13 - 30, chatBox.w, height - chatBox.h - (h-1)*13 - 30);
+            }
+            
         }
     }
     
     void displayPlayers(){
-        textAlign(CENTER);
-        text("Players",gridSpace/2, gridSpace + 10);
+        textAlign(LEFT);
+        text("Players",gridSpace * 3 / 4, gridSpace + 10);
         textSize(12);
         for(int i = 0; i < maxPlayers; i++){
             if(mode == 1){
-                drawName(players[i], symbols[i+1], gridSpace/2, gridSpace + 30 + i*20);
+                drawName(players[i], symbols[i+1], gridSpace* 3 / 4, gridSpace + 30 + i*20);
             } else if(mode == 2){
-                drawName(players[i], colors[i+1], gridSpace/2, gridSpace + 30 + i*20);
+                drawName(players[i], colors[i+1], gridSpace* 3 / 4, gridSpace + 30 + i*20);
             }
         }
     }
@@ -147,14 +188,25 @@ private class GameLobby{
         text("Status: " + ((started)?"Playing":"Waiting to begin"), 10, gridSpace + 100 );
     }
     
+    void displayWinner(){
+        textAlign(CENTER);
+        textSize(18);
+        fill(0);
+        text(symbols[this.winner] + " is the winner!", gridSpace*3/4, height - 25);
+    }
+    
     void leaveLobby(){
         if(currentGame != this) return;
         lobbyClient.write("l" + lobbyName + '\n');
         currentGame = null;
-        if(index == 1){
-            String myLeaveMessage = receive();
-            println("Leave Message:", myLeaveMessage);
-        }
+        //if(index == this.leader){
+        //    String myLeaveMessage = receive();
+        //    println("Leave Message:", myLeaveMessage);
+        //    if(!started){
+        //        String endingMsg = receive();
+        //        println("ENDMSG:",endingMsg);
+        //    }
+        //}
         setLobbyStatus();
     }
     
@@ -162,16 +214,16 @@ private class GameLobby{
         if(winner != 0) return;
         if(playerTurn != index) return;
         if(mouseX >= offset/2 && mouseX <= gridSpace-offset/2 && mouseY >= offset/2 && mouseY <= gridSpace-offset/2){
-            int x = (mouseX - offset/2)/cellSize, y = (mouseY - offset/2)/cellSize;
-            if(grid[y][x] != 0) 
+            int x = min((mouseX - offset/2)/cellSize,gridSize-1), y = min((mouseY - offset/2)/cellSize,gridSize-1);
+            if(this.grid[y][x] != 0) 
                 return;
-            grid[y][x] = index;
+            lobbyClient.write("p"+ y + "," + x + "," + index + "\n");
             playerTurn = 0;
         }
     }
     
     void handleServerMessage(String message){
-        println("Received from game:",message);
+        //println("Received from game:",message);
         char command = message.charAt(0);
         if(command == 'e'){ //End of Game
             while(lobbyClient.available() > 0)
@@ -198,8 +250,9 @@ private class GameLobby{
         }
         else if(command == 'p'){ //Player Move
             String[] move = message.substring(1).split(",");
-            int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]);
-            grid[y][x] = playerTurn;
+            int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]), ind = Integer.parseInt(move[2]);
+            println(y,x,"is now",ind);
+            grid[y][x] = ind;
         }
         else if(command == 'w'){ //Winner Declared
             winner = Integer.parseInt(message.substring(1));
@@ -227,11 +280,11 @@ void drawName(String name, color c, int x, int y){
     textAlign(LEFT);
     rect(x,y,12,12);
     if(name != null)
-        text(name, x + 10, y);
+        text(name, x + 10, y+4);
 }
 void drawName(String name, String c, int x, int y){
     textSize(12);
-    textAlign(CENTER);
+    textAlign(LEFT);
     String nameText;
     if(name == null)
         nameText = c + ":";

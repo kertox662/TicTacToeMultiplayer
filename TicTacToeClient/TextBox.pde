@@ -127,6 +127,12 @@ private class TextBox{
             curIndex--;
         }
     }
+    String getText(){
+        String t = this.text;
+        this.text = "";
+        this.curIndex = 0;
+        return t;
+    }
     
     boolean isClicked(int x, int y){
         if(x >= this.x && x <= this.x + this.w && y >= this.y && y <= this.y+this.h) return true;

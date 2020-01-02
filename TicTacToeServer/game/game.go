@@ -8,13 +8,16 @@ import (
 	"time"
 
 	"../lobby"
+	"../logging"
 )
 
 const emptyTimeAllowed = 1000 * time.Second
 
 //HandleGame - Goroutine that will handle the processes of the game
 func HandleGame(game *lobby.GameLobby) {
-	fmt.Println(game.Name, game.NumPlayer, game.MaxPlayer, game.Mode, game.GridSize)
+	logging.Log(fmt.Sprintf("Started Lobby:\nSize: %dx%d\nConnect: %d\nMax Players: %d\nMode: %d",
+		game.GridSize, game.GridSize, game.Target, game.MaxPlayer, game.Mode))
+
 	game.Grid = make([][]int, game.GridSize)
 	for i := 0; i < game.GridSize; i++ {
 		game.Grid[i] = make([]int, game.GridSize)
@@ -32,7 +35,6 @@ func HandleGame(game *lobby.GameLobby) {
 
 			lastEmptyCheck = time.Now()
 		}
-		// fmt.Println(len(game.CommChan))
 		for len(game.CommChan) > 0 {
 			commandChan := <-game.CommChan
 			request := <-commandChan
@@ -54,8 +56,17 @@ func HandleGame(game *lobby.GameLobby) {
 				broadcastChan := <-game.CommChan
 				game.ReverseChans[i] = broadcastChan
 				game.NumPlayer++
-				broadcast(game, "j"+request[1:])
-				broadcast(game, "m"+request[1:]+" has joined the lobby")
+				index := strconv.Itoa(i)
+				for j := 0; j < game.MaxPlayer; j++ {
+					if game.PlayerNames[j] != "" {
+						message := "j" + game.PlayerNames[j] + "," + strconv.Itoa(j)
+						go send(game, message, i)
+					}
+				}
+				send(game, "n"+strconv.Itoa(game.Leader), i)
+				go broadcast(game, "j"+request[1:]+","+index)
+				go broadcast(game, "m"+request[1:]+" has joined the lobby")
+				logging.Log(game.Name + ":::" + request[1:] + " has joined")
 				lastEmptyCheck = time.Now()
 				break
 			case 's':
@@ -63,7 +74,16 @@ func HandleGame(game *lobby.GameLobby) {
 				name := request[1:]
 				if name == game.PlayerNames[game.Leader-1] {
 					game.Started = true
-					broadcast(game, "s")
+					var wg sync.WaitGroup
+					broadcastConc(game, "s", &wg)
+					wg.Wait()
+					hasMultPlayers := game.NextPlayerTurn()
+					if !hasMultPlayers {
+						broadcast(game, "w"+strconv.Itoa(game.CurPlayer))
+					} else {
+						broadcast(game, "t"+strconv.Itoa(game.CurPlayer))
+					}
+					logging.Log(game.Name + ":::Has Started Playing")
 				}
 				break
 			case 'p': //Play Move
@@ -76,7 +96,8 @@ func HandleGame(game *lobby.GameLobby) {
 					break
 				}
 				game.Grid[r][c] = index
-				broadcast(game, move)
+				broadcast(game, "p"+move)
+				logging.Log(fmt.Sprintf("%s:::Move by %d to %d,%d", game.Name, index, r, c))
 				winnerInd := game.CheckWinner(r, c)
 				if winnerInd > 0 {
 					broadcast(game, "w"+strconv.Itoa(winnerInd))
@@ -90,27 +111,28 @@ func HandleGame(game *lobby.GameLobby) {
 
 				break
 			case 'm': //Player Chat message Message
+				logging.Log(game.Name + ":::" + request[1:])
 				broadcast(game, request)
 				break
 			case 'l': //Player Leave
 				needNewLeader := false
+				game.NumPlayer--
 				if game.PlayerNames[game.Leader-1] == request[1:] {
-					if !game.Started {
-						endGame(game.Name)
-						go broadcast(game, "e"+game.Name)
-						return
-					}
 					needNewLeader = true
-
 				}
-
+				if game.NumPlayer == 0 && !game.Started {
+					endGame(game.Name)
+				}
 				var endingWG sync.WaitGroup
 				broadcastConc(game, "l"+request[1:], &endingWG)
 				endingWG.Wait()
-				index := game.RemovePlayer(request[1:])
-				fmt.Println(index, "has left", game.Name)
-				go broadcast(game, "mSERVER:::"+request[1:]+" has left the lobby")
-				game.NumPlayer--
+				pName, _ := game.RemovePlayer(request[1:])
+				if game.NumPlayer == 0 && !game.Started {
+					go broadcast(game, "e"+game.Name)
+					return
+				}
+				logging.Log(pName + " has left " + game.Name)
+				go broadcast(game, "m"+request[1:]+" has left the lobby")
 
 				if needNewLeader {
 					if game.NumPlayer == 0 {
@@ -127,7 +149,7 @@ func HandleGame(game *lobby.GameLobby) {
 					var wg sync.WaitGroup
 					broadcastConc(game, "n"+strconv.Itoa(game.Leader), &wg)
 					wg.Wait()
-					broadcast(game, "mSERVER:::"+strconv.Itoa(game.Leader)+" is the new Leader")
+					broadcast(game, "m"+game.PlayerNames[game.Leader-1]+" is the new Leader")
 				}
 				lastEmptyCheck = time.Now()
 				break
@@ -150,9 +172,7 @@ func send(game *lobby.GameLobby, message string, index int) {
 
 func broadcastConc(game *lobby.GameLobby, message string, wg *sync.WaitGroup) {
 	for i := 0; i < game.MaxPlayer; i++ {
-		fmt.Println("I:", i)
 		if game.ReverseChans[i] != nil {
-			fmt.Println("FOUND:", i)
 			wg.Add(1)
 			go sendConc(game, message, i, wg)
 		}

@@ -84,6 +84,7 @@ void hostLobby(){
         hostError = "Lobby name matches existing lobby";
         return;
     }
+    refreshLobbies();
     joinLobby(boxes[2].text);
     for(int i = 2; i < 7; i++){
         boxes[i].text = "";
@@ -105,10 +106,11 @@ void joinLobby(String name){
         for(GameLobby l : lobbies){
             if(name.equals(l.name)){
                 currentGame = l;
+                l.index = index;
                 break;
             }
         }
-        currentGame.index = index;
+        
         setInGameStatus();
         
     }

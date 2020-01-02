@@ -5,8 +5,7 @@ String lobbyName;
 
 
 Client connectMain(String name){
-    //client = new Client(this, "kiki.cubetex.net", 42069);
-    Client client = new Client(this, "127.0.0.1", 42069);
+    Client client = new Client(this, IP, PORT);
     client.write(name+"\n");
     String acceptance = "";
     long timeWentBy = System.currentTimeMillis();
@@ -41,5 +40,6 @@ String receive(){
         if(next == '\n') break;
         message += next;
     }
+    println("RECEIVED:", message);
     return message;
 }

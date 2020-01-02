@@ -57,6 +57,7 @@ func (gl *GameLobby) NextPlayerTurn() bool {
 	for i := gl.CurPlayer; i != initPlayer || noLoop; {
 		i = (i % gl.MaxPlayer) + 1
 		if gl.PlayerNames[i-1] != "" {
+			gl.CurPlayer = i
 			return true
 		}
 		noLoop = false
@@ -67,12 +68,10 @@ func (gl *GameLobby) NextPlayerTurn() bool {
 //AddPlayer - Adds a connection object and name to matching indices in the GameLobby object if they do not yet exist
 func (gl *GameLobby) AddPlayer(name string) (int, bool) {
 	if gl.NumPlayer >= gl.MaxPlayer {
-		// fmt.Println("Too many Players")
 		return 0, false
 	}
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == name {
-			// fmt.Println("Already in game")
 			return 0, false
 		}
 	}
@@ -80,25 +79,24 @@ func (gl *GameLobby) AddPlayer(name string) (int, bool) {
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == "" {
 			gl.PlayerNames[i] = name
-			// gl.ReverseChans[i] = commChan
-			// fmt.Println("Found")
 			return i, true
 		}
 	}
-	// fmt.Println("No space?")
 	return 0, false
 }
 
 //RemovePlayer - Removes a Channel object and name in the GameLobby object
-func (gl *GameLobby) RemovePlayer(name string) int {
+func (gl *GameLobby) RemovePlayer(name string) (string, int) {
+	playerName := ""
 	for i := 0; i < len(gl.PlayerNames); i++ {
 		if gl.PlayerNames[i] == name {
+			playerName = gl.PlayerNames[i]
 			gl.PlayerNames[i] = ""
 			gl.ReverseChans[i] = nil
-			return i
+			return playerName, i
 		}
 	}
-	return -1
+	return "", -1
 }
 
 //RemovePlayerByChan - Removes a Channel object and name in the GameLobby object by the channel index
@@ -213,7 +211,7 @@ func addNewLobby(gl *GameLobby) int {
 func deleteLobby(lobbyName string) {
 	for i := 0; i < len(lobbies); i++ {
 		if lobbies[i] == nil {
-			break
+			continue
 		}
 		if lobbies[i].Name == lobbyName {
 			lobbies[i].ended = true
@@ -226,7 +224,7 @@ func deleteLobby(lobbyName string) {
 func getLobbyList() string {
 	list := ""
 	for i := 0; i < len(lobbies); i++ {
-		if !lobbies[i].Started {
+		if lobbies[i] != nil && !lobbies[i].Started {
 			list += lobbies[i].Encode() + "\n"
 		}
 	}
