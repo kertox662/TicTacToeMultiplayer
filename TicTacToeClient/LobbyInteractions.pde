@@ -1,6 +1,12 @@
 void refreshLobbies(){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
     lobbyClient.write("r\n");
     receiveLobbies();
+    lock.popFront();
 }
 
 void receiveLobbies(){
@@ -80,6 +86,11 @@ void hostLobby(){
         r += data.get(i);
         if(i < data.size()-1) r += ',';
     }
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
     lobbyClient.write('n' + r + '\n');
     while(lobbyClient.available() == 0){
     }
@@ -89,6 +100,7 @@ void hostLobby(){
         hostError = "Lobby name matches existing lobby";
         return;
     }
+    lock.popFront();
     refreshLobbies();
     joinLobby(boxes[2].text);
     for(int i = 2; i < 7; i++){
@@ -98,16 +110,21 @@ void hostLobby(){
 }
 
 void joinLobby(String name){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
     lobbyClient.write("j"+name+'\n');
     while(lobbyClient.available() == 0){
     }
     char c = lobbyClient.readChar();
+    joinError = "";
     if(c == '0'){
         while(lobbyClient.available() == 0){
         }
         int index = Integer.parseInt(String.valueOf(lobbyClient.readChar()));
         receiveLobbies();
-        //refreshLobbies();
         for(GameLobby l : lobbies){
             if(name.equals(l.name)){
                 currentGame = l;
@@ -115,14 +132,59 @@ void joinLobby(String name){
                 break;
             }
         }
-        
+        lock.popFront();
         setInGameStatus();
-        
+        return;
     }
-    else if(c == '1'){
+    lock.popFront();
+    if(c == '1'){
+        joinError = "Lobby is full";
     }
     else if(c == '2'){
+        joinError = "Game has started";
     }
     else if(c == '3'){
+        joinError = "Lobby no longer exists";
     }
+    refreshLobbies();
+}
+
+void sendStart(){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("s"+lobbyName+"\n");
+    lock.popFront();
+}
+
+void sendMessage(){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("m" + lobbyName + ":" + chatBox.getText() + "\n");
+    lock.popFront();
+}
+
+void sendMove(int y, int x, int index){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("p"+ y + "," + x + "," + index + "\n");
+    lock.popFront();
+}
+
+void sendLeave(){
+    long timeStamp = System.nanoTime();
+    lock.addAccess(timeStamp);
+    while(lock.peekFront() != timeStamp){
+        //Pass
+    }
+    lobbyClient.write("l" + lobbyName + '\n');
+    lock.popFront();
 }

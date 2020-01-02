@@ -1,5 +1,5 @@
 TextBox nameBox = null;
-String serverError = "", hostError = "";
+String serverError = "", hostError = "", joinError = "";
 
 int pixelsUp = 0;
 
@@ -54,6 +54,14 @@ void drawUserName(){
 }
 
 void drawJoinError(){
+    fill(220, 20,20);
+    stroke(220, 20,20);
+    textSize(12);
+    textAlign(CENTER,CENTER);
+    if(!joinError.equals("")){
+        text("Error While Joining:", joinLobby.x + joinLobby.w/2, joinLobby.y + 25);
+        text(joinError, joinLobby.x + joinLobby.w/2, joinLobby.y + 40);
+    }
 }
 
 void drawAmountOnline(){

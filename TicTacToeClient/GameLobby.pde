@@ -208,16 +208,8 @@ private class GameLobby{
     
     void leaveLobby(){
         if(currentGame != this) return;
-        lobbyClient.write("l" + lobbyName + '\n');
+        sendLeave();
         currentGame = null;
-        //if(index == this.leader){
-        //    String myLeaveMessage = receive();
-        //    println("Leave Message:", myLeaveMessage);
-        //    if(!started){
-        //        String endingMsg = receive();
-        //        println("ENDMSG:",endingMsg);
-        //    }
-        //}
         setLobbyStatus();
     }
     
@@ -228,7 +220,7 @@ private class GameLobby{
             int x = min((mouseX - offset/2)/cellSize,gridSize-1), y = min((mouseY - offset/2)/cellSize,gridSize-1);
             if(this.grid[y][x] != 0) 
                 return;
-            lobbyClient.write("p"+ y + "," + x + "," + index + "\n");
+            sendMove(y,x,index);
             playerTurn = 0;
         }
     }
@@ -239,6 +231,7 @@ private class GameLobby{
         if(command == 'e'){ //End of Game
             while(lobbyClient.available() > 0)
                 message = receive();
+            joinError = "Host has left unstarted game";
             setLobbyStatus();
         }
         else if(command == 'm'){ //Chat Message

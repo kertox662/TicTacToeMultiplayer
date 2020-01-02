@@ -27,6 +27,8 @@ String status = "unconnected";
 
 GameLobby curGame = null;
 
+NetworkLock lock;
+
 void settings(){
     //Window Setup
     size(800,640);
@@ -35,10 +37,6 @@ void settings(){
 
 void setup(){
     frameRate(60);
-    
-    //Grid Setup
-    //grid = new int[gridSize][gridSize];
-    //cellSize = (gridSpace-offset) / gridSize;
     
     makeNameBox();
     makeChatBox();
@@ -51,6 +49,7 @@ void setup(){
     nameBox.isSelected = true;
     
     lobbies = new ArrayList<GameLobby>();
+    lock = new NetworkLock();
 }
 
 void draw(){
@@ -63,6 +62,7 @@ void draw(){
         outLineGrid();
         drawHostBoxes();
         drawHostError();
+        drawJoinError();
         drawLobbyButtons();
         drawUserName();
         drawAmountOnline();
@@ -146,7 +146,7 @@ void mouseClicked(){
             }
             currentGame.startButton.handleClick();
             if(currentGame.startButton.framesClicked > 0){
-                lobbyClient.write("s"+lobbyName+"\n");
+                sendStart();
             }
         } catch(NullPointerException e){
         }
@@ -171,7 +171,7 @@ void keyPressed(){
                     refreshLobbies();
                 }
             } else if(selectedBox == chatBox && chatBox.text.length() > 0){
-                lobbyClient.write("m" + lobbyName + ":" + chatBox.getText() + "\n");
+                sendMessage();
             } else if(selectedLobby != null && inLobby){
                 joinLobby(selectedLobby.name);
             }else if(inLobby){
