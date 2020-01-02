@@ -1,6 +1,7 @@
 import processing.net.*;
 
-final String IP = "kiki.cubetex.net"; //The IP the client Connects to
+String IP;
+//final String IP = "kiki.cubetex.net"; //The IP the client Connects to
 //final String IP = "127.0.0.1";
 final int PORT = 42069; //The port at which the client connects at
 
@@ -31,6 +32,17 @@ void settings(){
 
 void setup(){
     frameRate(60);
+    String[] IPFile;
+    try{
+        IPFile = loadStrings("ip.txt");
+        if(IPFile.length > 0){
+            IP = IPFile[0];
+        }
+    } catch(NullPointerException e){ //File is not there
+        
+    }
+    
+    
     
     //Sets up buttons and TextBoxes
     makeNameBox();

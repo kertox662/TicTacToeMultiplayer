@@ -2,7 +2,7 @@ logs
 
 *.log
 
-killCommand.txt
+killCommand
 
 *.sh
 
