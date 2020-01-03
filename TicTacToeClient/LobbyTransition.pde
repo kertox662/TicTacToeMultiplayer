@@ -14,6 +14,7 @@ void setLobbyStatus(){ //Sets variables for lobby mode
     currentGame = null;
     chatBox.active = false;
     refreshLobbies();
+    showLastMove = false;
 }
 
 void setInGameStatus(){ //Sets variables for gaming mode
@@ -33,4 +34,5 @@ void setInGameStatus(){ //Sets variables for gaming mode
     inGameLobby = true;
     currentGame.leaveButton.active = true;
     currentGame.leaveButton.framesClicked = 0;
+    showLastMove = false;
 }

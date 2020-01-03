@@ -7,6 +7,8 @@ TextBox chatBox = null;
 ArrayList<GameLobby> lobbies; //Store Lobby Objects
 GameLobby selectedLobby = null, currentGame = null;
 
+boolean showLastMove = false;
+
 private class GameLobby{
     String name; //Lobby Display and connection name
     int curPlayers, maxPlayers, playerTurn, winner; //PlayerTurn and Winner are Player indices
@@ -163,6 +165,7 @@ private class GameLobby{
     }
     
     void displayLastMove(){
+        if(!showLastMove) return;
         if(mode == 1){
             stroke(colors[4]);
             strokeWeight(2);

@@ -207,6 +207,8 @@ void keyPressed(){
             }else{
                 if(key == 'r' && inLobby){ //If no selected and in lobby, refresh shortcut
                     refreshLobbies();
+                } else if(key == ' ' && inGameLobby){
+                    showLastMove = true;
                 }
             }
             break;
@@ -229,6 +231,12 @@ void keyPressed(){
             }
             break;
         }
+    }
+}
+
+void keyReleased(){
+    if(key == ' ' && inGameLobby){
+        showLastMove = false;
     }
 }
 
