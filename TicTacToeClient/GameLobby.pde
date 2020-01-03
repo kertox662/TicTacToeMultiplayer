@@ -66,6 +66,7 @@ private class GameLobby{
         this.winner = 0;
         started = false;
         this.playerTurn = 0;
+        lastMove[0] = lastMove[1] = -50;
     }
     
     boolean isFull(){
