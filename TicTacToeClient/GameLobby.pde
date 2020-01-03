@@ -23,6 +23,7 @@ private class GameLobby{
     int cellSize;
     boolean isSpectator;
     int spectators;
+    int[] lastMove;
     
     
     GameLobby(String name, int curP, int maxP, int mode, int gridSize, int target, boolean isStarted){
@@ -47,6 +48,8 @@ private class GameLobby{
         this.cellSize = (gridSpace-offset) / gridSize;
         this.isSpectator = false;
         this.spectators = 0;
+        this.lastMove = new int[2];
+        lastMove[0] = lastMove[1] = -50;
     }
     
     GameLobby(String[] info){//Lobby from String
@@ -154,6 +157,25 @@ private class GameLobby{
           line(cellSize * i + offset/2, offset/2, cellSize* i + offset/2, cellSize*gridSize + offset/2);
           line(offset/2, cellSize * i + offset/2, cellSize*gridSize + offset/2, cellSize * i + offset/2);
         }
+        
+        displayLastMove();
+    }
+    
+    void displayLastMove(){
+        if(mode == 1){
+            stroke(colors[4]);
+            strokeWeight(2);
+        }
+        else{
+            if(gridSize < 10)
+                strokeWeight(4);
+            else
+                strokeWeight(3);
+        }
+        noFill();
+        rectMode(CORNER);
+        rect(lastMove[1] * cellSize + offset/2, lastMove[0]*cellSize + offset/2, cellSize, cellSize);
+        strokeWeight(1);
     }
     
     void displayLeave(){ //Leave Button
@@ -352,6 +374,8 @@ private class GameLobby{
             int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]), ind = Integer.parseInt(move[2]);
             //println(y,x,"is now",ind);
             grid[y][x] = ind;
+            lastMove[0] = y;
+            lastMove[1] = x;
         }
         else if(command == 'w'){ //Winner Declared -> update winner
             winner = Integer.parseInt(message.substring(1));

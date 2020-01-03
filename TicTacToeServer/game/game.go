@@ -181,7 +181,7 @@ func HandleGame(game *lobby.GameLobby) {
 					go broadcastSpec(spectatorChannels, "o"+strconv.Itoa(len(spectatorChannels)))
 					break
 				}
-
+				lastEmptyCheck = time.Now()
 				needNewLeader = false
 				game.NumPlayer--
 				if game.PlayerNames[game.Leader-1] == request[1:] {
@@ -215,7 +215,6 @@ func HandleGame(game *lobby.GameLobby) {
 					wg.Wait()
 					broadcast(game, "m"+game.PlayerNames[game.Leader-1]+" is the new Leader")
 				}
-				lastEmptyCheck = time.Now()
 				break
 			}
 		}
