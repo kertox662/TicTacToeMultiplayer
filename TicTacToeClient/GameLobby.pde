@@ -356,15 +356,19 @@ private class GameLobby{
             setLobbyStatus(); //Go to lobby
         }
         else if(command == 'm'){ //Chat Message -> add to chat list
-            chat.append(message.substring(1));
+            String msg = message.substring(1);
+            chat.append(msg);
             if(chat.size() > MAX_CHAT_SIZE){
                 chat.remove(0);
             }
+            if(!msg.endsWith("Starting the game") && !msg.endsWith("has joined the lobby") && !msg.endsWith("has left the lobby"))
+                thread("playMessage");
         }
         else if(command == 'n'){ //New Leader -> set leader
             this.leader = Integer.parseInt(message.substring(1));
         }
         else if(command == 'l'){ //Player Leave -> Remove player from list
+            thread("playLeave");
             String playerName = message.substring(1);
             for(int i = 0; i < maxPlayers; i++){
                 if(playerName.equals(players[i])){
@@ -374,6 +378,7 @@ private class GameLobby{
             }
         }
         else if(command == 'p'){ //Player Move -> update grid
+            thread("playMove");
             String[] move = message.substring(1).split(",");
             int y = Integer.parseInt(move[0]), x = Integer.parseInt(move[1]), ind = Integer.parseInt(move[2]);
             //println(y,x,"is now",ind);
@@ -383,8 +388,10 @@ private class GameLobby{
         }
         else if(command == 'w'){ //Winner Declared -> update winner
             winner = Integer.parseInt(message.substring(1));
+            thread("playWin");
         }
         else if(command == 'j'){ //Player Join -> update player list
+            thread("playJoin");
             String[] info = message.substring(1).split(",");
             String playerName = info[0];
             int index = Integer.parseInt(info[1]);
@@ -394,6 +401,7 @@ private class GameLobby{
             playerTurn = Integer.parseInt(message.substring(1));
         }
         else if(command == 's'){ //Start of Game -> set game to be started
+            thread("playStart");
             started = true;
         }
         else if(command == 'u'){ //Reset game
