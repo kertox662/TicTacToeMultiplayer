@@ -89,6 +89,7 @@ func HandleGame(game *lobby.GameLobby) {
 				broadcastChan := <-game.CommChan
 				spectatorChannels = append(spectatorChannels, broadcastChan)
 				spectatorNames = append(spectatorNames, request[1:])
+				broadcast(game, "m"+request[1:]+" is now spectating")
 				for i := 0; i < len(playerMoves); i++ {
 					go sendSpec(broadcastChan, playerMoves[i])
 				}
