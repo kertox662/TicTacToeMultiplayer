@@ -189,6 +189,12 @@ func HandleGame(game *lobby.GameLobby) {
 					needNewLeader = true
 				}
 
+				if game.PlayerNames[game.CurPlayer-1] == request[1:] {
+					game.NextPlayerTurn()
+					broadcast(game, "t"+strconv.Itoa(game.CurPlayer))
+					broadcastSpec(spectatorChannels, "t"+strconv.Itoa(game.CurPlayer))
+				}
+
 				var endingWG sync.WaitGroup
 				broadcastConc(game, "l"+request[1:], &endingWG)
 				go broadcastSpec(spectatorChannels, "l"+request[1:])
