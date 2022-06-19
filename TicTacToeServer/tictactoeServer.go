@@ -5,10 +5,10 @@ import (
 	"net"
 	"os"
 
-	"./lobby"
-	"./logging"
-	"./naming"
-	"./network"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/lobby"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/logging"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/naming"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/network"
 )
 
 func main() {

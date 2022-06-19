@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"../game"
-	"../lobby"
-	"../logging"
-	"../naming"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/game"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/lobby"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/logging"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/naming"
 )
 
 var clientAddrs []string

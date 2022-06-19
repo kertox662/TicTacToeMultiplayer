@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"../lobby"
-	"../logging"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/lobby"
+	"github.com/kertox662/TicTacToeMultiplayer/TicTacToeServer/logging"
 )
 
 const emptyTimeAllowed = 30 * time.Second
